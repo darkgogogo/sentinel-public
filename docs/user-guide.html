@@ -134,7 +134,6 @@
   <ul class="sb-nav">
     <div class="sb-section-label">入门</div>
     <li><a href="#overview">系统是什么</a></li>
-    <li><a href="#diagram">系统调用图</a></li>
     <li><a href="#quickstart">3 分钟跑通</a></li>
     <li><a href="#services">4 个 service</a></li>
     <li><a href="#entrypoints">3 个入口</a></li>
@@ -149,16 +148,12 @@
 
     <div class="sb-section-label">部署 / 数据</div>
     <li><a href="#deploy">launchd 部署</a></li>
-    <li><a href="#migrate">v1 数据迁移</a></li>
     <li><a href="#backup">备份与故障</a></li>
 
     <div class="sb-section-label">架构</div>
-    <li><a href="#design-principles">4 条架构原则</a></li>
-    <li><a href="#collector-extend">加新 collector</a></li>
 
     <div class="sb-section-label">系统级</div>
     <li><a href="#faq">系统级 FAQ</a></li>
-    <li><a href="#versions">版本演进</a></li>
   </ul>
 
   <div class="sb-footer">
@@ -182,9 +177,8 @@
   <h1>Sentinel v2</h1>
   <p class="lead">通用主题舆情雷达 · 不锁特定行业 · 4 个独立 service · 3 端入口 · Mac launchd 自动化</p>
 
-  <p>Sentinel v2 是对 v1（VPN 行业舆情雷达）的<strong>原理性重构</strong>。借鉴 aihot 项目的 4 条架构原则（详见 <a href="#design-principles">下文</a>），让代码每一层都各司其职、按主题组织信源、Web UI 取代旧 5 skill 主操作面。</p>
 
-  <p>v1 已完整归档至 <code>v1 sentinel 项目（如果有的话）/</code> 和 KB <code>_archive/v1/</code>，不再触发。</p>
+  <p>v1 已完整归档至 <code>~/sentinel-legacy/</code> 和 KB <code>_archive/v1/</code>，不再触发。</p>
 
   <h3>核心特点</h3>
   <ul>
@@ -198,14 +192,6 @@
 </section>
 
 <!-- ============ DIAGRAM (必有：系统调用图) ============ -->
-<section id="diagram">
-  <h2>系统调用图</h2>
-  <p>v2 整体架构（含数据流 / 控制流 / 工具区 · 详见架构图原图）：</p>
-  <img class="arch-img" src="architecture.svg" alt="Sentinel v2 架构图">
-  <p>下方"完整使用示范" 5 个场景演示了主要数据/控制流走向。</p>
-</section>
-
-<!-- ============ QUICKSTART ============ -->
 <section id="quickstart">
   <h2>3 分钟跑通</h2>
 
@@ -386,7 +372,7 @@ chmod 600 secrets/.env
         <div class="scenario-row you"><div class="who">YOU</div><div class="body">"出个 VPN 行业动态 信源建议"</div></div>
         <div class="scenario-row claude"><div class="who">CL</div><div class="body">"建议跑：<br><code>python -m sentinel advisor scan --topic 'VPN 行业动态'</code><br>这会调 Haiku，看 30 天反馈窗口数据 + 信噪比 + user_label。OK 跑吗？"</div></div>
         <div class="scenario-row you"><div class="who">YOU</div><div class="body">"跑"</div></div>
-        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">写到 <code>03-主题/VPN-行业动态/信源.md</code> 的 <code>## advisor 建议</code> section：<br>"- 建议关闭 @noise_channel · 信噪比 0.003<br>- 建议加权 @example_channel · 信噪比 0.32 持续高质量<br>- 推荐关键词：增加 'XHTTP', 'AnyTLS'"</div></div>
+        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">写到 <code>03-主题/VPN-行业动态/信源.md</code> 的 <code>## advisor 建议</code> section：<br>"- 建议关闭 @noise_channel · 信噪比 0.003<br>- 建议加权 @gfwknocker · 信噪比 0.32 持续高质量<br>- 推荐关键词：增加 'XHTTP', 'AnyTLS'"</div></div>
       </div>
     </div>
 
@@ -433,7 +419,7 @@ chmod 600 secrets/.env
     <div class="det-body">
       <ol>
         <li>开 <code>/topics</code></li>
-        <li>填表："name=my-product / industry=VPN / monitor_direction=my-product 自身可用性 + 主要竞品 / alert_enabled=✓"</li>
+        <li>填表："name=letsvpn / industry=VPN / monitor_direction=letsvpn 自身可用性 + 主要竞品 / alert_enabled=✓"</li>
         <li>点 topic 进详情页 <code>/topics/{id}</code></li>
         <li>关联信源（从已有 source 下拉选）</li>
         <li>加关键词（chip 形式，逐个加）</li>
@@ -489,7 +475,7 @@ sentinel deploy status       # 看部署状态 + host check
 sentinel deploy uninstall    # unload + 移除 plist</code></pre>
 
   <h3>数据迁移</h3>
-  <pre><code>sentinel migrate-v1            # dry-run · 看会从 v1 sentinel 项目 导入什么
+  <pre><code>sentinel migrate-v1            # dry-run · 看会从 ~/sentinel-legacy 导入什么
 sentinel migrate-v1 --apply    # 实际写入
 sentinel migrate-v1 --v1-db <path>   # 指定其他 v1 db</code></pre>
 
@@ -546,7 +532,7 @@ sentinel migrate-v1 --v1-db <path>   # 指定其他 v1 db</code></pre>
 <section id="kb-structure">
   <h2>KB 结构</h2>
 
-<pre><code><KB_ROOT>/
+<pre><code>~/.kb/02-Work/1-Pixl/Projects/Sentinel/
 ├── 总览.md                                       # 项目入口
 ├── 运行状态.md                                    # service 自动维护
 ├── 00-系统设计/
@@ -578,12 +564,12 @@ sentinel migrate-v1 --v1-db <path>   # 指定其他 v1 db</code></pre>
   <table>
     <thead><tr><th>plist label</th><th>触发时段</th><th>跑什么</th></tr></thead>
     <tbody>
-    <tr><td><code>local.sentinel.collect</code></td><td>02 / 08 / 14 / 20</td><td><code>sentinel collect run</code></td></tr>
-    <tr><td><code>local.sentinel.alert</code></td><td>02:30 / 08:30 / 14:30 / 20:30</td><td><code>sentinel alert run</code></td></tr>
-    <tr><td><code>local.sentinel.weekly</code></td><td>周日 22:00</td><td><code>sentinel analyze weekly</code>（按 weekly_enabled）</td></tr>
-    <tr><td><code>local.sentinel.backup</code></td><td>每天 23:30</td><td>SQLite gzip → KB _archive/backups/ + 顺带 rotate-logs</td></tr>
-    <tr><td><code>local.sentinel.watchdog</code></td><td>每天 09:00</td><td>collect/alert/backup/weekly 4 项 + 周一月初 heartbeat</td></tr>
-    <tr><td><code>local.sentinel.web</code></td><td>长驻（开机自启）</td><td><code>sentinel web --port 8080</code>，崩溃 10s 自愈</td></tr>
+    <tr><td><code>world.pixl.sentinel.collect</code></td><td>02 / 08 / 14 / 20</td><td><code>sentinel collect run</code></td></tr>
+    <tr><td><code>world.pixl.sentinel.alert</code></td><td>02:30 / 08:30 / 14:30 / 20:30</td><td><code>sentinel alert run</code></td></tr>
+    <tr><td><code>world.pixl.sentinel.weekly</code></td><td>周日 22:00</td><td><code>sentinel analyze weekly</code>（按 weekly_enabled）</td></tr>
+    <tr><td><code>world.pixl.sentinel.backup</code></td><td>每天 23:30</td><td>SQLite gzip → KB _archive/backups/ + 顺带 rotate-logs</td></tr>
+    <tr><td><code>world.pixl.sentinel.watchdog</code></td><td>每天 09:00</td><td>collect/alert/backup/weekly 4 项 + 周一月初 heartbeat</td></tr>
+    <tr><td><code>world.pixl.sentinel.web</code></td><td>长驻（开机自启）</td><td><code>sentinel web --port 8080</code>，崩溃 10s 自愈</td></tr>
     </tbody>
   </table>
 
@@ -607,32 +593,6 @@ launchctl list | grep sentinel    # 验证 6 个 service 已 load</code></pre>
 </section>
 
 <!-- ============ MIGRATE ============ -->
-<section id="migrate">
-  <h2>v1 数据迁移</h2>
-  <p>从 <code>v1 sentinel 项目（如果有的话）/db/messages.db</code> 把 v1 的 sources / topics / topic_keywords / topic_sources 导入 v2。</p>
-
-  <p><strong>不迁移</strong>：messages / alerts / daemon_runs（fresh start 数据）。</p>
-
-  <h3>用法</h3>
-  <pre><code>sentinel migrate-v1                  # dry-run（默认）· 看会做什么
-sentinel migrate-v1 --apply          # 实际写入
-sentinel migrate-v1 --v1-db <path>   # 指定其他 v1 db</code></pre>
-
-  <h3>转换规则</h3>
-  <ul>
-    <li><strong>industry</strong>：v1 没该字段 → v2 默认 <code>'VPN'</code></li>
-    <li><strong>alert_enabled</strong>：v1 没该字段 → v2 默认 <code>1</code>（启用告警）</li>
-    <li><strong>failure_count</strong>：v1 没 → v2 从 0 开始</li>
-    <li><strong>UNIQUE 冲突</strong>：(kind, identifier) 重复的 source、name 重复的 topic 跳过</li>
-    <li><strong>未知 kind</strong>：跳过 + 报告里告警</li>
-  </ul>
-
-  <div class="callout warn">
-    迁移完不会自动启 daemon。你需要单独 <code>sentinel deploy install</code> 才让 launchd 接管。
-  </div>
-</section>
-
-<!-- ============ BACKUP ============ -->
 <section id="backup">
   <h2>备份与故障</h2>
 
@@ -694,31 +654,6 @@ tail -100 ~/sentinel-v2/logs/weekly.err.log
 </section>
 
 <!-- ============ PRINCIPLES ============ -->
-<section id="design-principles">
-  <h2>4 条架构原则</h2>
-  <p>v2 重构借鉴的核心原则（来源：aihot 项目对比分析）：</p>
-
-  <div class="principles">
-    <div class="principle">
-      <div class="pn-name">#1 SKILL.md 不堆逻辑</div>
-      <div class="pn-desc">SKILL.md 只翻译意图 → 调 CLI/lib → 格式化输出，<strong>不写工作流逻辑</strong>。v2 sentinel skill 71 行就够，所有业务在 ~/sentinel-v2/sentinel/</div>
-    </div>
-    <div class="principle">
-      <div class="pn-name">#2 数据面 / 呈现面强分层</div>
-      <div class="pn-desc">analyze.data 拉数据调 LLM 返回结构化 dict；analyze.render 组装 markdown 写 KB。两层独立可测，不混</div>
-    </div>
-    <div class="principle">
-      <div class="pn-name">#3 边界关注点放在边界</div>
-      <div class="pn-desc">pause / 阈值 / retry / caffeinate / retention 全收到 runtime.shell context manager。<strong>业务核心代码只关心业务</strong></div>
-    </div>
-    <div class="principle">
-      <div class="pn-name">#4 pull-on-demand vs daemon 分清</div>
-      <div class="pn-desc">collect / alert 是 daemon；analyze / advisor 是 pull。social 平台抓取放 collector 内部 fetcher，不依赖 LLM session</div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ SYSTEM FAQ (必有) ============ -->
 <section id="faq">
   <h2>系统级 FAQ</h2>
   <p>跨 service / 系统层面的问题（单 skill FAQ 答不了的）：</p>
@@ -753,12 +688,12 @@ tail -100 ~/sentinel-v2/logs/weekly.err.log
 
   <details>
     <summary>v1 数据归档后还能回去查吗？</summary>
-    <div class="det-body">可以。v1 代码 + DB 在 <code>v1 sentinel 项目（如果有的话）/</code>（已 <code>.pause</code> 永久暂停）；v1 报告 / 告警归档 / 设计文档全在 <code>02-Work/1-Pixl/Projects/Sentinel/_archive/v1/</code>。SQLite 用 <code>sqlite3 v1 sentinel 项目（如果有的话）/db/messages.db</code> 直接查。</div>
+    <div class="det-body">可以。v1 代码 + DB 在 <code>~/sentinel-legacy/</code>（已 <code>.pause</code> 永久暂停）；v1 报告 / 告警归档 / 设计文档全在 <code>02-Work/1-Pixl/Projects/Sentinel/_archive/v1/</code>。SQLite 用 <code>sqlite3 ~/sentinel-legacy/db/messages.db</code> 直接查。</div>
   </details>
 
   <details>
     <summary>Telegram session 怎么共享 / 迁移？</summary>
-    <div class="det-body">从 <code>v1 sentinel 项目（如果有的话）/secrets/*.session</code> 拷到 <code>~/sentinel-v2/secrets/</code>。telethon 会复用 session（不用重新登录）。注意 session 文件 chmod 600 + 不进 git。</div>
+    <div class="det-body">从 <code>~/sentinel-legacy/secrets/*.session</code> 拷到 <code>~/sentinel-v2/secrets/</code>。telethon 会复用 session（不用重新登录）。注意 session 文件 chmod 600 + 不进 git。</div>
   </details>
 
   <details>
@@ -786,96 +721,15 @@ tail -100 ~/sentinel-v2/logs/weekly.err.log
 </section>
 
 <!-- ============ VERSIONS (必有) ============ -->
-<section id="versions">
-  <h2>版本演进</h2>
-
-  <ul class="versions">
-    <li>
-      <div class="v-name">v2.0.0 · 通用主题舆情雷达（原理性重构）</div>
-      <div class="v-date">2026-05-15</div>
-      <div class="v-body">
-        借鉴 aihot 项目 4 条架构原则重写。从 VPN 锁死 → 通用主题；从 1 个大 daemon → 4 个独立 service；从 5 个 skill → 1 个翻译层 skill + Web UI 全后台。
-        加 industry / alert_enabled / service 字段，扩 KB 03-主题/ 维度。launchd 6 plist 接管自动化。137 测试全过。
-      </div>
-    </li>
-    <li>
-      <div class="v-name">v1.2 · 反向校验 + social 链路（v1 最后一版）</div>
-      <div class="v-date">2026-05-14</div>
-      <div class="v-body">
-        analyze prompt 加 8 字段 4 反向校验（❓反例 / 🧪证伪 / ⚠️误判 / 🔗多源）。试图加 social 平台 collector（scan-social 派 web-access），但跨世界拼接复杂度高。该版触发了 v2 重构决策。
-      </div>
-    </li>
-    <li>
-      <div class="v-name">v1.1 · 数据驱动迭代</div>
-      <div class="v-date">2026-05-11</div>
-      <div class="v-body">
-        Topics 1→7，sources 47 enabled。caffeinate 防 Mac 睡眠冻结、StartCalendarInterval 补跑、user_label 反馈机制、议题聚类、4 launchd plist 全套。
-      </div>
-    </li>
-    <li>
-      <div class="v-name">v1.0 · MVP</div>
-      <div class="v-date">2026-05-10</div>
-      <div class="v-body">
-        launchd 短跑模型、6 SQLite 表、Telegram + Twitter + Reddit + RSS 4 collector、5 skill（router + 4 spoke）。VPN 行业舆情雷达。
-      </div>
-    </li>
-  </ul>
-</section>
-
-<!-- ============ COLLECTOR EXTEND ============ -->
-<section id="collector-extend">
-  <h2>加新 collector kind</h2>
-  <p>v2 collector 插件化：新增 kind <strong>不动 schema、不动 service 主循环</strong>。</p>
-
-  <h3>步骤</h3>
-  <ol>
-    <li>写 <code>sentinel/collectors/&lt;kind&gt;.py</code></li>
-    <li>实现 <code>BaseCollector</code> 子类（<code>KIND</code> / <code>async def collect()</code> / <code>@classmethod async def resolve()</code>）</li>
-    <li>用 <code>@register</code> 装饰</li>
-    <li><code>sentinel/collectors/__init__.py</code> 的 <code>auto_discover()</code> import 列表加一行</li>
-    <li>跑 <code>pytest tests/test_collectors_*</code> 加测试</li>
-  </ol>
-
-  <h3>需要反爬时</h3>
-  <p>用 <code>sentinel/fetchers/</code> 工具层：</p>
-  <ul>
-    <li><code>HttpxFetcher</code> · 直连（默认）</li>
-    <li><code>JinaFetcher</code> · <code>r.jina.ai</code> 转 markdown 省 token（反爬轻）</li>
-    <li><code>CdpFetcher</code> · playwright + 本地 Chrome CDP（反爬重，stub）</li>
-  </ul>
-
-<pre><code>from sentinel.fetchers import HttpxFetcher, JinaFetcher, fetch_with_chain
-
-async def collect(self, since):
-    r = await fetch_with_chain(url, [HttpxFetcher(), JinaFetcher()])
-    if not r.ok:
-        raise FetchFailed(r.error)
-    # parse r.body...</code></pre>
-
-  <h3>已实现 collector kind</h3>
-  <table>
-    <thead><tr><th>kind</th><th>实现</th><th>resolve 验证</th></tr></thead>
-    <tbody>
-    <tr><td>telegram</td><td>telethon</td><td>get_entity</td></tr>
-    <tr><td>rss</td><td>feedparser + HTML 剥离 + title 合并</td><td>feedparser 试解析</td></tr>
-    <tr><td>twitter</td><td>SocialData API</td><td>GET /twitter/user/{handle}</td></tr>
-    <tr><td>reddit</td><td>RSS 端点（reddit.com/r/X/.rss）</td><td>RSS resolve 委托</td></tr>
-    <tr><td>social</td><td>per-platform dispatch · V2EX 已实现 · zhihu/xiaohongshu/jike/bilibili stub</td><td>验证 platform 名</td></tr>
-    <tr><td>inbox</td><td>监视 KB <code>inbox/&lt;topic-slug&gt;/*.md</code>，ingest 后改名 <code>.md.ingested</code></td><td>验证 slug 存在</td></tr>
-    </tbody>
-  </table>
-</section>
-
-<!-- ============ 相关 skill ============ -->
 <section id="related-skills">
   <h2>相关 skill</h2>
   <ul>
-    <li><strong>my-product-research-*</strong> — my-product 用户研究系统 · 5 skill 链。<strong>信源 / 主题维度跟 sentinel 平行</strong>：sentinel 监控的是公开信源（TG/RSS/...），my-product-research 做的是 my-product 自家用户的画像研究。</li>
+    <li><strong>letsvpn-research-*</strong> — letsvpn 用户研究系统 · 5 skill 链。<strong>信源 / 主题维度跟 sentinel 平行</strong>：sentinel 监控的是公开信源（TG/RSS/...），letsvpn-research 做的是 letsvpn 自家用户的画像研究。</li>
     <li><strong>web-access</strong> — 通用反爬抓取 skill。sentinel collector 内部的 <code>fetchers/</code> 工具层<strong>借鉴</strong>了 web-access 的 site-pattern 沉淀（HttpxFetcher / JinaFetcher / CdpFetcher），但<strong>不依赖</strong> web-access skill 本身（aihot 原则 #4）。</li>
     <li><strong>fireworks-tech-graph</strong> — 技术图生成 skill · 用来重画 <code>00-系统设计/Sentinel 架构图.svg</code> 的工具。</li>
     <li><strong>neat-freak</strong> — KB 同步 skill · 改 v2 后整理 KB 文档（设计.md / 总览.md / hot.md / Skill 索引）时用。触发 <code>/neat</code>。</li>
   </ul>
-  <p class="muted"><strong>分工口诀</strong>：sentinel 是"公开舆情雷达"，my-product-research 是"自家用户研究"，web-access 是"抓取工具箱"。互不重叠。</p>
+  <p class="muted"><strong>分工口诀</strong>：sentinel 是"公开舆情雷达"，letsvpn-research 是"自家用户研究"，web-access 是"抓取工具箱"。互不重叠。</p>
 </section>
 
 </main>
