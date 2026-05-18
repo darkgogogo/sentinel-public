@@ -2,6 +2,12 @@
 
 通用主题舆情雷达。订阅 Telegram / RSS / Twitter / Reddit / RSSHub 信源，按主题聚合，LLM 自动 triage 发警报 + 出深度报告。
 
+## 架构
+
+![Sentinel v2 architecture](docs/architecture.svg)
+
+数据流（左→右）+ 控制流（顶部橙虚线，触发 service）+ 工具能力区（下方独立）三轨布局。详见 [docs/design.md](docs/design.md) §1。
+
 ## 状态
 
 **v2.2 (2026-05-17)** · 215 测试全过 · 4 service + 3 AI advisor + 6 collector kind · macOS launchd 接管 (6 plist + 可选 RSSHub plist)
@@ -11,7 +17,14 @@
 - **6 collector kind**: telegram · rss · twitter · reddit · social · inbox
 - **3 入口**: Web UI (推荐) · CLI · 自定义 Claude Skill
 
-完整设计 SSoT 见 [docs/design.md](docs/design.md)。视觉架构图见 [docs/architecture.svg](docs/architecture.svg)。终端用户运营手册见 [docs/user-guide.html](docs/user-guide.html)。
+## 文档
+
+| 文件 | 谁看 | 内容 |
+|---|---|---|
+| 本 README | 第一次接触 | 5 分钟跑通 + 路径约定 + 命令速查 + launchd 部署表 + Web UI 概览 |
+| [docs/user-guide.html](docs/user-guide.html) | 日常运营 | 完整运营手册（50K · 下载到本地浏览器打开看更佳）：每个 service 详解 / Web UI 操作 / FAQ / 故障排查 |
+| [docs/design.md](docs/design.md) | 想懂内部 | 系统设计 SSoT：架构 §1 / 数据模型 §2 / service 层 §3 / KB 结构 §5 / v2.1+v2.2 增量摘要 §11 / 4 条架构原则附录 A |
+| [docs/architecture.svg](docs/architecture.svg) | 30 秒概览 | 视觉架构图（即上方嵌入版） |
 
 ## 5 分钟跑通
 
