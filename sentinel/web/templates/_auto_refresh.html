@@ -1,0 +1,14 @@
+{# Auto-refresh toggle · 跑 service / 看进度时打开（URL ?refresh=1 → 30s meta refresh） #}
+{% set refresh_on = request.query_params.get('refresh') == '1' %}
+{% set base_path = request.url.path %}
+<span class="refresh-toggle">
+  {% if refresh_on %}
+    <a href="{{ base_path }}" class="badge ok" title="自动刷新已开启（30s）— 点击关闭">
+      🔄 自动刷新 ON
+    </a>
+  {% else %}
+    <a href="{{ base_path }}?refresh=1" class="badge cold" title="点击开启 30s 自动刷新">
+      ⏱ 自动刷新 OFF
+    </a>
+  {% endif %}
+</span>

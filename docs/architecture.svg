@@ -1,0 +1,264 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1480 1230" width="1480" height="1230">
+  <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+  </style>
+  <defs>
+    <marker id="ar-data" markerWidth="11" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 11 4, 0 8" fill="#2563eb"/>
+    </marker>
+    <marker id="ar-write" markerWidth="11" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 11 4, 0 8" fill="#16a34a"/>
+    </marker>
+    <marker id="ar-core" markerWidth="11" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 11 4, 0 8" fill="#9333ea"/>
+    </marker>
+    <marker id="ar-control" markerWidth="11" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 11 4, 0 8" fill="#ea580c"/>
+    </marker>
+    <marker id="ar-gray" markerWidth="11" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 11 4, 0 8" fill="#94a3b8"/>
+    </marker>
+    <marker id="ar-cyan" markerWidth="11" markerHeight="8" refX="10" refY="4" orient="auto">
+      <polygon points="0 0, 11 4, 0 8" fill="#0891b2"/>
+    </marker>
+  </defs>
+  <rect width="1480" height="1230" fill="#ffffff"/>
+  <text x="100" y="44" font-size="26" font-weight="700" fill="#111827">Sentinel v2 架构图</text>
+  <text x="100" y="70" font-size="13" fill="#6b7280">顶部 = 控制流（橙虚线，触发 service）  ·  主图 = 数据流（左→右）  ·  下方 = 工具/能力区独立  ·  主干 v2.0 (2026-05-15) · v2.2 增量 (2026-05-17) 见设计 §18</text>
+
+  <!-- ===== 3 bands ===== -->
+  <rect x="92" y="86" width="1350" height="106" rx="14" fill="#fff7ed"/>
+  <rect x="92" y="208" width="1350" height="600" rx="14" fill="#fafbfc"/>
+  <rect x="92" y="826" width="1350" height="138" rx="14" fill="#fffbeb"/>
+
+  <text x="120" y="106" font-size="11.5" font-weight="600" fill="#9a3412" letter-spacing="2">CONTROL FLOW · 控制流（触发 service）</text>
+  <text x="120" y="228" font-size="11.5" font-weight="600" fill="#475569" letter-spacing="2">DATA FLOW · 数据流（左→右）</text>
+  <text x="120" y="844" font-size="11.5" font-weight="600" fill="#92400e" letter-spacing="2">TOOLS · 工具与能力（不在数据/控制路径）</text>
+
+  <!-- ===== 控制流 ===== -->
+  <rect x="120" y="115" width="230" height="70" rx="9" fill="#ffffff" stroke="#9ca3af" stroke-width="2"/>
+  <text x="235" y="132" font-size="12" font-weight="600" fill="#111827" text-anchor="middle">触发入口（3 类）</text>
+  <text x="135" y="150" font-size="10.5" fill="#475569">⏱ launchd 定时（自动）</text>
+  <text x="135" y="164" font-size="10.5" fill="#475569">▸ Web UI / CLI（手动）</text>
+  <text x="135" y="180" font-size="9.5" fill="#9ca3af" font-style="italic">Skill 对话 = CLI 的 AI 包装入口</text>
+  <line x1="350" y1="150" x2="450" y2="150" stroke="#ea580c" stroke-width="2" marker-end="url(#ar-control)"/>
+  <rect x="450" y="115" width="240" height="70" rx="9" fill="#fde68a" stroke="#d97706" stroke-width="2"/>
+  <text x="570.0" y="140" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">service API</text>
+  <text x="570.0" y="159" font-size="11" fill="#6b7280" text-anchor="middle">HTTP API + Python lib</text>
+  <text x="570.0" y="173" font-size="11" fill="#6b7280" text-anchor="middle">统一入口</text>
+  <text x="700" y="155" font-size="11" fill="#9a3412" font-weight="600">trigger ↓</text>
+  <path d="M510,185 L510,200 L225,200 L225,285" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ar-control)"/>
+  <path d="M580,185 L580,255 L925,255 L925,285" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ar-control)"/>
+  <path d="M630,185 L630,205 L1110,205 L1110,390 L1015,390 L1015,405" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ar-control)"/>
+  <path d="M650,185 L650,218 L1130,218 L1130,505 L1010,505 L1010,520" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ar-control)"/>
+  <text x="370" y="208" font-size="10.5" fill="#9a3412">触发 collect</text>
+  <text x="760" y="247" font-size="10.5" fill="#9a3412">触发 alert</text>
+  <text x="960" y="200" font-size="10.5" fill="#9a3412">触发 analyze ★</text>
+  <text x="960" y="232" font-size="10.5" fill="#9a3412">触发 advisor</text>
+
+  <!-- ===== 4 列标题 ===== -->
+  <text x="230" y="264" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">① 主题 + 信源 (sources)</text>
+  <text x="590" y="264" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">② 中央存储</text>
+  <text x="960" y="264" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">③ 处理服务</text>
+  <text x="1315" y="264" font-size="13" font-weight="600" fill="#1f2937" text-anchor="middle">④ 产出</text>
+
+  <!-- ===== ① 列：collect + 主题 + 信源 (anchor y=285) ===== -->
+  <rect x="120" y="285" width="220" height="56" rx="9" fill="#eff6ff" stroke="#93c5fd" stroke-width="2"/>
+  <text x="230.0" y="310" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">collect service</text>
+  <text x="230.0" y="329" font-size="11" fill="#6b7280" text-anchor="middle">调度采集 · 不调 LLM</text>
+  <path d="M230,341 L230,355" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#ar-gray)"/>
+  <text x="268" y="351" font-size="9.5" fill="#94a3b8">drives sources</text>
+
+  <rect x="120" y="360" width="220" height="105" rx="9" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="230.0" y="385" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">▼ 主题 A · my-product</text>
+  <text x="230.0" y="404" font-size="11" fill="#6b7280" text-anchor="middle">industry: VPN</text>
+  <text x="230.0" y="418" font-size="11" fill="#6b7280" text-anchor="middle">• Telegram: @example_channel</text>
+  <text x="230.0" y="432" font-size="11" fill="#6b7280" text-anchor="middle">• Twitter: @example_news</text>
+  <text x="230.0" y="446" font-size="11" fill="#6b7280" text-anchor="middle">• 小红书话题: #VPN</text>
+
+  <rect x="120" y="480" width="220" height="105" rx="9" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="230.0" y="505" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">▼ 主题 B · 双减</text>
+  <text x="230.0" y="524" font-size="11" fill="#6b7280" text-anchor="middle">industry: 教育</text>
+  <text x="230.0" y="538" font-size="11" fill="#6b7280" text-anchor="middle">• Telegram: @edu-watch</text>
+  <text x="230.0" y="552" font-size="11" fill="#6b7280" text-anchor="middle">• 知乎话题: #双减</text>
+  <text x="230.0" y="566" font-size="11" fill="#6b7280" text-anchor="middle">• RSS: 教育部公告</text>
+
+  <text x="230" y="608" font-size="11" fill="#9ca3af" font-style="italic" text-anchor="middle">▼ ... 可任意扩展主题 ...</text>
+  <text x="230" y="640" font-size="9.5" fill="#9ca3af" text-anchor="middle">同渠道(如 Telegram)在不同主题</text>
+  <text x="230" y="654" font-size="9.5" fill="#9ca3af" text-anchor="middle">下是独立 source 实例（不同 channel/关键词）</text>
+
+  <!-- ===== ② SQLite 中央存储 (top y=285) ===== -->
+  <rect x="470" y="285" width="240" height="380" rx="9" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2"/>
+  <text x="590.0" y="310" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">SQLite messages.db</text>
+  <text x="590.0" y="329" font-size="11" fill="#6b7280" text-anchor="middle">sources</text>
+  <text x="590.0" y="343" font-size="11" fill="#6b7280" text-anchor="middle">topics</text>
+  <text x="590.0" y="357" font-size="11" fill="#6b7280" text-anchor="middle">messages</text>
+  <text x="590.0" y="371" font-size="11" fill="#6b7280" text-anchor="middle">alerts</text>
+  <text x="590.0" y="385" font-size="11" fill="#6b7280" text-anchor="middle">service_runs</text>
+  <text x="590.0" y="413" font-size="11" fill="#6b7280" text-anchor="middle">──── v2 新增字段 ────</text>
+  <text x="590.0" y="427" font-size="11" fill="#6b7280" text-anchor="middle">topic.industry</text>
+  <text x="590.0" y="441" font-size="11" fill="#6b7280" text-anchor="middle">topic.alert_enabled</text>
+  <text x="590.0" y="471" font-size="11" fill="#0891b2" text-anchor="middle">──── v2.2 新增 ────</text>
+  <text x="590.0" y="485" font-size="11" fill="#0891b2" text-anchor="middle">topic_coverage_audit (新表)</text>
+  <text x="590.0" y="499" font-size="11" fill="#0891b2" text-anchor="middle">topic.alert_interval_hours</text>
+  <text x="590.0" y="513" font-size="11" fill="#0891b2" text-anchor="middle">topic.weekly_enabled / backfill_hours</text>
+  <text x="590.0" y="527" font-size="11" fill="#0891b2" text-anchor="middle">topic.last_alert_checked_at</text>
+  <text x="590.0" y="541" font-size="11" fill="#0891b2" text-anchor="middle">service_runs.llm_*  (cost / tokens)</text>
+
+  <!-- ===== ③ 处理服务 (top y=285, shift -35) ===== -->
+  <rect x="830" y="285" width="260" height="95" rx="9" fill="#fff7ed" stroke="#fdba74" stroke-width="2"/>
+  <text x="960.0" y="310" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">alert service</text>
+  <text x="960.0" y="329" font-size="11" fill="#6b7280" text-anchor="middle">从 SQLite 读新 messages</text>
+  <text x="960.0" y="343" font-size="11" fill="#6b7280" text-anchor="middle">→ Haiku triage → push + 归档</text>
+  <text x="960.0" y="357" font-size="11" fill="#6b7280" text-anchor="middle">按 topic.alert_enabled 开关 + 频率 gate ✨</text>
+
+  <rect x="830" y="405" width="260" height="95" rx="9" fill="#faf5ff" stroke="#c4b5fd" stroke-width="2"/>
+  <text x="960.0" y="430" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">★ analyze service</text>
+  <text x="960.0" y="449" font-size="11" fill="#6b7280" text-anchor="middle">人工触发 → 出深度报告</text>
+  <text x="960.0" y="463" font-size="11" fill="#6b7280" text-anchor="middle">读 SQLite → Opus 深度分析</text>
+  <text x="960.0" y="477" font-size="11" fill="#6b7280" text-anchor="middle">period / topic / industry 参数</text>
+
+  <rect x="830" y="520" width="260" height="95" rx="9" fill="#ecfeff" stroke="#67e8f9" stroke-width="2"/>
+  <text x="960.0" y="545" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">advisor service</text>
+  <text x="960.0" y="564" font-size="11" fill="#6b7280" text-anchor="middle">人工触发 → 信源运营建议</text>
+  <text x="960.0" y="578" font-size="11" fill="#6b7280" text-anchor="middle">读 messages + alerts + user_label</text>
+  <text x="960.0" y="592" font-size="11" fill="#6b7280" text-anchor="middle">→ Haiku 出"加权/关闭/关键词"</text>
+
+  <!-- ✨ AI 顾问 service block (v2.2 新增) -->
+  <rect x="830" y="635" width="260" height="125" rx="9" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+  <text x="960.0" y="658" font-size="13" font-weight="600" fill="#0e7490" text-anchor="middle">AI 顾问 service ✨ (v2.2)</text>
+  <text x="960.0" y="675" font-size="10" fill="#0e7490" text-anchor="middle" font-style="italic">主动驱动 · 由 watchdog / Web UI 按钮触发</text>
+  <text x="843" y="695" font-size="11" font-weight="600" fill="#0e7490">coverage_audit</text>
+  <text x="940" y="695" font-size="10.5" fill="#475569">周一 watchdog · Haiku</text>
+  <text x="843" y="715" font-size="11" font-weight="600" fill="#0e7490">source_discovery</text>
+  <text x="940" y="715" font-size="10.5" fill="#475569">新建 topic · Opus + 搜索</text>
+  <text x="843" y="735" font-size="11" font-weight="600" fill="#0e7490">keyword_advisor</text>
+  <text x="940" y="735" font-size="10.5" fill="#475569">Web UI · Haiku 样本</text>
+  <text x="960.0" y="752" font-size="9.5" fill="#94a3b8" text-anchor="middle" font-style="italic">写 topic_coverage_audit / 推荐添加 → ④ 产出</text>
+
+  <!-- ===== ④ 产出 (top y=285, shift -27) ===== -->
+  <rect x="1210" y="285" width="210" height="110" rx="9" fill="#ecfdf5" stroke="#86efac" stroke-width="2"/>
+  <text x="1315.0" y="310" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">Alert outputs</text>
+  <text x="1315.0" y="329" font-size="11" fill="#6b7280" text-anchor="middle">Telegram Push (命中即推送)</text>
+  <text x="1315.0" y="343" font-size="11" fill="#6b7280" text-anchor="middle">  24h headline 去重</text>
+  <text x="1315.0" y="357" font-size="11" fill="#6b7280" text-anchor="middle">KB 02-告警归档/</text>
+  <text x="1315.0" y="371" font-size="11" fill="#6b7280" text-anchor="middle">  按周聚合</text>
+
+  <rect x="1210" y="425" width="210" height="70" rx="9" fill="#ecfdf5" stroke="#86efac" stroke-width="2"/>
+  <text x="1315.0" y="450" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">KB 01-报告/</text>
+  <text x="1315.0" y="469" font-size="11" fill="#6b7280" text-anchor="middle">周报 · 主题深度</text>
+
+  <rect x="1210" y="540" width="210" height="80" rx="9" fill="#ecfdf5" stroke="#86efac" stroke-width="2"/>
+  <text x="1315.0" y="565" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">KB 03-主题/[topic]/信源.md</text>
+  <text x="1315.0" y="584" font-size="11" fill="#6b7280" text-anchor="middle">信源清单 + 元信息</text>
+  <text x="1315.0" y="598" font-size="11" fill="#6b7280" text-anchor="middle">+ advisor 建议 section</text>
+
+  <text x="1315" y="638" font-size="10" fill="#9ca3af" text-anchor="middle" font-style="italic">+ 运行状态.md (各 service 自动维护)</text>
+
+  <!-- ✨ AI 顾问产出（v2.2）-->
+  <rect x="1210" y="658" width="210" height="60" rx="9" fill="#cffafe" stroke="#0891b2" stroke-width="2"/>
+  <text x="1315.0" y="681" font-size="13" font-weight="600" fill="#0e7490" text-anchor="middle">coverage_audit ✨</text>
+  <text x="1315.0" y="697" font-size="10.5" fill="#475569" text-anchor="middle">db 表 + Web /topics 上 banner</text>
+  <text x="1315.0" y="711" font-size="10" fill="#94a3b8" text-anchor="middle" font-style="italic">推荐添加: rsshub URL / web-access 关键词</text>
+
+  <!-- ===== 数据流箭头 ===== -->
+  <!-- ①→② (col 1 主题 box mid-y stays unchanged) -->
+  <path d="M340,413 L470,413" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ar-data)"/>
+  <path d="M340,533 L470,533" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ar-data)"/>
+  <path d="M340,608 L470,608" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="6,4"/>
+  <rect x="387.8" y="459" width="34.4" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="405" y="470" font-size="11" fill="#2563eb" text-anchor="middle">采集汇入</text>
+
+  <!-- ②→③ (use col 3 mid-y: 332 / 452 / 567 / 685) -->
+  <path d="M710,332 L830,332" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ar-data)"/>
+  <rect x="762.7" y="313" width="14.6" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="770" y="324" font-size="11" fill="#2563eb" text-anchor="middle">读</text>
+
+  <path d="M710,452 L830,452" fill="none" stroke="#9333ea" stroke-width="2" marker-end="url(#ar-core)"/>
+  <rect x="756.1" y="433" width="27.8" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="770" y="444" font-size="11" fill="#9333ea" text-anchor="middle">读 ★</text>
+
+  <path d="M710,567 L830,567" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#ar-data)"/>
+  <rect x="762.7" y="548" width="14.6" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="770" y="559" font-size="11" fill="#2563eb" text-anchor="middle">读</text>
+
+  <!-- ✨ AI 顾问 读 SQLite -->
+  <path d="M710,685 L830,685" fill="none" stroke="#0891b2" stroke-width="2" stroke-dasharray="4,2" marker-end="url(#ar-cyan)"/>
+  <rect x="752" y="666" width="36" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="770" y="677" font-size="10.5" fill="#0891b2" text-anchor="middle">读样本 ✨</text>
+
+  <!-- ③→④ (anchored to col 3 mid, col 4 slight diagonal up to 13px) -->
+  <path d="M1090,332 L1210,332" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#ar-write)"/>
+  <rect x="1122.9" y="313" width="54.2" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="1150" y="324" font-size="10.5" fill="#16a34a" text-anchor="middle">推送 + 归档</text>
+
+  <path d="M1090,452 L1210,452" fill="none" stroke="#9333ea" stroke-width="2" marker-end="url(#ar-core)"/>
+  <rect x="1127.5" y="433" width="41.0" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="1148" y="444" font-size="10.5" fill="#9333ea" text-anchor="middle">写报告 ★</text>
+
+  <path d="M1090,567 L1210,567" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#ar-write)"/>
+  <rect x="1120.9" y="548" width="54.2" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="1148" y="559" font-size="10.5" fill="#16a34a" text-anchor="middle">更新信源.md</text>
+
+  <!-- ✨ AI 顾问 → AI 顾问产出 -->
+  <path d="M1090,685 L1210,685" fill="none" stroke="#0891b2" stroke-width="2" marker-end="url(#ar-cyan)"/>
+  <rect x="1124" y="666" width="52" height="15" fill="#fafbfc" opacity="0.95"/>
+  <text x="1150" y="677" font-size="10.5" fill="#0891b2" text-anchor="middle">写审计/推荐</text>
+
+  <!-- ===== 工具区 (3 块, 标注 inbox/RSSHub/v2.2 LLM 用法) ===== -->
+  <rect x="120" y="860" width="460" height="95" rx="9" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="350.0" y="885" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">Collectors 实现层 · Fetchers</text>
+  <text x="350.0" y="904" font-size="11" fill="#6b7280" text-anchor="middle">telegram→telethon · twitter→SocialData · feed→feedparser</text>
+  <text x="350.0" y="918" font-size="11" fill="#6b7280" text-anchor="middle">social-web→Fetchers chain (httpx · jina · playwright+CDP)</text>
+  <text x="350.0" y="932" font-size="11" fill="#0891b2" text-anchor="middle">+ inbox kind ✨ → 监视 KB/inbox/&lt;slug&gt;/*.md → 入库 (web-access 兜底)</text>
+  <text x="350.0" y="946" font-size="11" fill="#0891b2" text-anchor="middle">+ RSSHub ✨ ~/RSSHub/ launchd :1200 → social 平台改走 rss kind</text>
+
+  <rect x="620" y="860" width="340" height="95" rx="9" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="790.0" y="885" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">runtime.shell 外壳</text>
+  <text x="790.0" y="904" font-size="11" fill="#6b7280" text-anchor="middle">包装 service 业务核心</text>
+  <text x="790.0" y="918" font-size="11" fill="#6b7280" text-anchor="middle">pause · 阈值 · retry · caffeinate</text>
+  <text x="790.0" y="932" font-size="11" fill="#6b7280" text-anchor="middle">run 记录 · 致命错 · host_check</text>
+  <text x="790.0" y="946" font-size="10.5" fill="#0891b2" text-anchor="middle">✨ host_check 用 /usr/sbin/scutil · llm_usage accumulator</text>
+
+  <rect x="1000" y="860" width="370" height="95" rx="9" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+  <text x="1185.0" y="885" font-size="14" font-weight="600" fill="#111827" text-anchor="middle">LLM models</text>
+  <text x="1185.0" y="904" font-size="11" fill="#6b7280" text-anchor="middle">alert / advisor / coverage_audit / keyword_advisor: Haiku 4.5</text>
+  <text x="1185.0" y="918" font-size="11" fill="#6b7280" text-anchor="middle">analyze ★ / source_discovery: Opus 4.7</text>
+  <text x="1185.0" y="932" font-size="11" fill="#6b7280" text-anchor="middle">CLI 模式（复用 Claude Pro）</text>
+  <text x="1185.0" y="946" font-size="10.5" fill="#0891b2" text-anchor="middle">✨ llm_usage 累加 cost → service_runs.llm_cost_usd</text>
+
+  <!-- implements / wraps dashed (AI 顾问 bottom 760 after shift) -->
+  <path d="M340,860 L340,842 L230,842 L230,665" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ar-gray)"/>
+  <text x="375" y="855" font-size="10" fill="#94a3b8">implements</text>
+
+  <path d="M780,860 L780,842 L960,842 L960,760" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ar-gray)"/>
+  <text x="870" y="835" font-size="10" fill="#94a3b8">wraps</text>
+
+  <path d="M1185,860 L1185,842 L1080,842 L1080,760" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ar-gray)"/>
+  <text x="1200" y="847" font-size="10" fill="#94a3b8">invoked by</text>
+
+  <!-- ===== 图例 + 关键变化 ===== -->
+  <text x="100" y="998" font-size="12" font-weight="600" fill="#374151">图例</text>
+  <line x1="100" y1="1020" x2="134" y2="1020" stroke="#2563eb" stroke-width="2" marker-end="url(#ar-data)"/>
+  <text x="140" y="1024" font-size="11" fill="#374151">主数据流</text>
+  <line x1="240" y1="1020" x2="274" y2="1020" stroke="#16a34a" stroke-width="2" marker-end="url(#ar-write)"/>
+  <text x="280" y="1024" font-size="11" fill="#374151">写入存储/产出</text>
+  <line x1="405" y1="1020" x2="439" y2="1020" stroke="#9333ea" stroke-width="2" marker-end="url(#ar-core)"/>
+  <text x="445" y="1024" font-size="11" fill="#374151">★ analyze 核心</text>
+  <line x1="580" y1="1020" x2="614" y2="1020" stroke="#0891b2" stroke-width="2" marker-end="url(#ar-cyan)"/>
+  <text x="620" y="1024" font-size="11" fill="#374151">✨ AI 顾问 (v2.2)</text>
+  <line x1="755" y1="1020" x2="789" y2="1020" stroke="#ea580c" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ar-control)"/>
+  <text x="795" y="1024" font-size="11" fill="#374151">控制流 (trigger)</text>
+  <line x1="930" y1="1020" x2="964" y2="1020" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ar-gray)"/>
+  <text x="970" y="1024" font-size="11" fill="#374151">工具复用 (dashed)</text>
+
+  <text x="100" y="1057" font-size="12" font-weight="600" fill="#374151">v2 关键变化 vs v1</text>
+  <text x="100" y="1077" font-size="10.5" fill="#374151">• 控制流（橙虚线）与数据流（实蓝/绿/紫）视觉分离，互不干扰</text>
+  <text x="100" y="1093" font-size="10.5" fill="#374151">• 数据源按 "主题(topic)" 组织 — 用户面对的是主题，不是 collector 实现</text>
+  <text x="100" y="1109" font-size="10.5" fill="#374151">• 同一渠道在不同主题下是独立 source 实例（如不同 TG channel / 关键词）</text>
+  <text x="100" y="1125" font-size="10.5" fill="#374151">• collector kind/抓取技术下沉到工具区，新增渠道不动主图</text>
+  <text x="100" y="1141" font-size="10.5" fill="#374151">• 4 个 service：collect / alert / analyze★ / advisor</text>
+  <text x="100" y="1157" font-size="10.5" fill="#374151">• advisor 建议直接更新到 03-主题/[topic]/信源.md 的 section（不另起目录）</text>
+  <text x="100" y="1181" font-size="10.5" fill="#0e7490">• v2.2 增量 ✨：3 AI 顾问 service（watchdog/Web 主动触发，写 coverage_audit + 推荐建议）</text>
+  <text x="100" y="1197" font-size="10.5" fill="#0e7490">• v2.2 增量 ✨：collector 工具加 inbox kind（web-access 兜底）+ RSSHub 外挂（social 平台走 rss）</text>
+</svg>

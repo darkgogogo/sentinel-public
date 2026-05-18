@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Sentinel · LLM 成本{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>LLM 成本</h1>
+    <p class="page-sub">
+      按月 · 按 service 聚合
+      <span class="sep">·</span>
+      <span style="color:var(--hint)">理论 API 计费 (非实际账单)</span>
+    </p>
+  </div>
+</header>
+
+<div class="callout callout-info">
+  <strong>这不是真实账单</strong>
+  <p>cli mode 显示的 cost 是 claude CLI 的 <code>total_cost_usd</code>（理论 API 计费）—— 你用的是 Pro/Max 月固定订阅，账单不随用量变。</p>
+  <p class="muted small">api mode 下 token 已记但 cost=0（需后续按 model pricing 计价）。</p>
+</div>
+
+{% if not by_month %}
+  <p class="muted">暂无成本数据 — 跑过 alert / analyze / advisor 之后才会有。</p>
+{% endif %}
+
+{% for month, rows in by_month.items() %}
+<section class="card">
+  <h2>{{ month }} <small class="muted">月小计 ${{ '%.4f'|format(month_totals[month].cost_usd) }} · {{ month_totals[month].runs }} 次 run</small></h2>
+  <table class="data">
+    <thead><tr>
+      <th>service</th><th>调用次数</th><th>tokens in</th><th>tokens out</th><th>cache read</th><th>cost (USD)</th>
+    </tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr>
+        <td><strong>{{ r.service }}</strong></td>
+        <td>{{ r.runs }}</td>
+        <td class="mono">{{ '{:,}'.format(r.tokens_in) }}</td>
+        <td class="mono">{{ '{:,}'.format(r.tokens_out) }}</td>
+        <td class="mono">{{ '{:,}'.format(r.cache_read) }}</td>
+        <td class="mono">${{ '%.4f'|format(r.cost_usd) }}</td>
+      </tr>
+    {% endfor %}
+      <tr class="total-row">
+        <td colspan="5"><strong>月合计</strong></td>
+        <td class="mono"><strong>${{ '%.4f'|format(month_totals[month].cost_usd) }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+
+{% endblock %}

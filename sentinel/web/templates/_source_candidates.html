@@ -1,0 +1,34 @@
+{% if candidates %}
+<div class="candidates-head">
+  <strong>{{ candidates | length }}</strong> 个推荐
+  <span class="muted small">勾选要添加的</span>
+  <button type="button" class="btn small ghost"
+          onclick="document.querySelectorAll('input[name=add_candidate]').forEach(c => c.checked = true)">全选</button>
+  <button type="button" class="btn small ghost"
+          onclick="document.querySelectorAll('input[name=add_candidate]').forEach(c => c.checked = false)">清空</button>
+</div>
+<div class="candidates-list">
+  {% for c in candidates %}
+  <label class="candidate">
+    <input type="checkbox" name="add_candidate"
+           value='{"kind":"{{ c.kind }}","identifier":"{{ c.identifier }}","display_name":"{{ c.display_name }}"}'>
+    <div class="candidate-body">
+      <div class="candidate-head">
+        <span class="badge accent">{{ c.kind }}</span>
+        <strong class="candidate-name">{{ c.display_name or c.identifier }}</strong>
+        <span class="badge {% if c.confidence == 'high' %}ok{% elif c.confidence == 'low' %}cold{% endif %}">{{ c.confidence }}</span>
+      </div>
+      {% if c.display_name %}
+      <div class="mono small muted candidate-id">{{ c.identifier }}</div>
+      {% endif %}
+      <div class="muted small candidate-reason">{{ c.reason }}</div>
+    </div>
+  </label>
+  {% endfor %}
+</div>
+{% else %}
+<div class="inline-banner warn">
+  <strong>没有有效推荐</strong>
+  <p>LLM 可能没找到合适的信源，或返回了非预期格式。请检查 monitor_direction 是否清晰具体。</p>
+</div>
+{% endif %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Sentinel · 报告{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>报告</h1>
+    <p class="page-sub">
+      <span class="em">{{ reports | length }}</span> 份深度报告 / 周报
+      <span class="sep">·</span>
+      <span class="em">{{ archives | length }}</span> 份告警归档
+      {% if type_filter or q %}<span class="sep">·</span><span style="color:var(--accent)">已应用筛选</span>{% endif %}
+    </p>
+  </div>
+</header>
+
+<form method="get" action="/reports" class="filter-bar">
+  <label>类型
+    <select name="type_filter">
+      <option value="">全部</option>
+      <option value="周报" {% if type_filter == '周报' %}selected{% endif %}>周报</option>
+      <option value="主题深度报告" {% if type_filter == '主题深度报告' %}selected{% endif %}>深度报告</option>
+    </select>
+  </label>
+  <label>关键词
+    <input type="text" name="q" value="{{ q or '' }}" placeholder="主题 / 标题 / 摘要">
+  </label>
+  <button type="submit" class="btn small primary">筛选</button>
+  {% if type_filter or q %}<a href="/reports" class="btn small">清除</a>{% endif %}
+</form>
+
+<section class="card">
+  <h2>深度报告 / 周报</h2>
+  {% if reports %}
+    <ul class="list">
+    {% for r in reports %}
+      <li class="report-item">
+        <div class="report-head">
+          <span class="badge">{{ r.type }}</span>
+          <a href="/reports/view?rel={{ r.rel | urlencode }}">{{ r.name }}</a>
+          <span class="muted ts mono">{{ r.mtime.strftime('%Y-%m-%d %H:%M') }}</span>
+        </div>
+        {% if r._summary %}
+        <div class="muted small report-summary">{{ r._summary }}</div>
+        {% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">
+      {% if type_filter or q %}无匹配报告。
+      {% else %}尚无报告（跑 <code>python -m sentinel analyze report --topic X --period 7d</code> 生成）。
+      {% endif %}
+    </p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>告警归档 <small class="muted">{{ archives | length }} 份（按周聚合）</small></h2>
+  {% if archives %}
+    <ul class="list">
+    {% for a in archives %}
+      <li>
+        <a href="/reports/view?rel={{ a.rel | urlencode }}">{{ a.name }}</a>
+        <span class="muted ts mono">{{ a.mtime.strftime('%Y-%m-%d %H:%M') }}</span>
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p class="muted">尚无归档</p>
+  {% endif %}
+</section>
+
+{% endblock %}

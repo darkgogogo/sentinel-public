@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ name }} · Sentinel{% endblock %}
+{% block content %}
+
+<div class="report-nav">
+  <p class="breadcrumb"><a href="/reports">← 返回列表</a></p>
+  <div class="report-meta">
+    <span class="badge">{{ rtype }}</span>
+    <span class="muted small mono">{{ mtime.strftime('%Y-%m-%d %H:%M') }}</span>
+  </div>
+</div>
+
+<article class="markdown">
+{{ html | safe }}
+</article>
+
+<nav class="report-prev-next">
+  {% if prev_rel %}
+  <a href="/reports/view?rel={{ prev_rel | urlencode }}" class="btn">
+    ← 上一篇 <span class="muted small">{{ prev_name }}</span>
+  </a>
+  {% else %}<span></span>{% endif %}
+  {% if next_rel %}
+  <a href="/reports/view?rel={{ next_rel | urlencode }}" class="btn">
+    下一篇 <span class="muted small">{{ next_name }}</span> →
+  </a>
+  {% else %}<span></span>{% endif %}
+</nav>
+
+{% endblock %}

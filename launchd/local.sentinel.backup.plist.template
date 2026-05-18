@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.sentinel.backup</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{SENTINEL_HOME}/scripts/backup.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>{SENTINEL_HOME}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>{HOME}</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- 每天 23:30 SQLite gzip 备份，14 天滚动 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key><integer>23</integer>
+        <key>Minute</key><integer>30</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>{SENTINEL_HOME}/logs/backup.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{SENTINEL_HOME}/logs/backup.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

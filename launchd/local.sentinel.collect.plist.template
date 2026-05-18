@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.sentinel.collect</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{PYTHON_PATH}</string>
+        <string>-m</string>
+        <string>sentinel</string>
+        <string>collect</string>
+        <string>run</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>{SENTINEL_HOME}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>{SENTINEL_HOME}</string>
+        <key>PATH</key>
+        <string>{HOME}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>{HOME}</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- 每 6h 一次（02/08/14/20），StartCalendarInterval 在 Mac 唤醒后会补跑错过的 tick -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>2</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>{SENTINEL_HOME}/logs/collect.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{SENTINEL_HOME}/logs/collect.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

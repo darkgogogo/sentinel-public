@@ -1,0 +1,39 @@
+{% if result.error %}
+<div class="inline-banner warn">
+  <strong>{{ result.error }}</strong>
+  {% if result.candidates is defined %}
+  <p class="muted small">已有 {{ result.existing_n }} 个 · 样本 {{ result.samples_n }} 条</p>
+  {% endif %}
+</div>
+{% elif result.candidates %}
+<div class="kw-candidates-head">
+  <strong>{{ result.candidates | length }}</strong> 个推荐
+  <span class="muted small">基于 {{ result.samples_n }} 条样本消息 (已排除现有 {{ result.existing_n }} 个)</span>
+</div>
+<form method="post" action="/topics/{{ topic_id }}/keywords/bulk-add">
+  <div class="kw-candidates-list">
+    {% for c in result.candidates %}
+    <label class="kw-candidate">
+      <input type="checkbox" name="kw" value="{{ c.keyword }}" checked>
+      <div>
+        <span class="kw-text mono">{{ c.keyword }}</span>
+        <span class="badge {% if c.confidence == 'high' %}ok{% elif c.confidence == 'low' %}cold{% else %}accent{% endif %}">{{ c.confidence }}</span>
+        <div class="muted small">{{ c.reason }}</div>
+      </div>
+    </label>
+    {% endfor %}
+  </div>
+  <div style="margin-top: var(--s-3)">
+    <button type="submit" class="btn primary">添加选中关键词</button>
+    <button type="button" class="btn small ghost"
+            onclick="document.querySelectorAll('input[name=kw]').forEach(c => c.checked = false)">清空</button>
+    <button type="button" class="btn small ghost"
+            onclick="document.querySelectorAll('input[name=kw]').forEach(c => c.checked = true)">全选</button>
+  </div>
+</form>
+{% else %}
+<div class="inline-banner">
+  <strong>暂无可推荐</strong>
+  <p class="muted small">LLM 没找到合适的新关键词。可能你已有的关键词足够覆盖了。</p>
+</div>
+{% endif %}

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.sentinel.alert</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{PYTHON_PATH}</string>
+        <string>-m</string>
+        <string>sentinel</string>
+        <string>alert</string>
+        <string>run</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>{SENTINEL_HOME}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>{SENTINEL_HOME}</string>
+        <key>PATH</key>
+        <string>{HOME}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>{HOME}</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- 错开 collect 30 分钟，让 collect 完成后再判 alert -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>2</integer><key>Minute</key><integer>30</integer></dict>
+        <dict><key>Hour</key><integer>8</integer><key>Minute</key><integer>30</integer></dict>
+        <dict><key>Hour</key><integer>14</integer><key>Minute</key><integer>30</integer></dict>
+        <dict><key>Hour</key><integer>20</integer><key>Minute</key><integer>30</integer></dict>
+    </array>
+
+    <key>StandardOutPath</key>
+    <string>{SENTINEL_HOME}/logs/alert.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{SENTINEL_HOME}/logs/alert.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

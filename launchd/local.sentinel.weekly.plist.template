@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>local.sentinel.weekly</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>{PYTHON_PATH}</string>
+        <string>-m</string>
+        <string>sentinel</string>
+        <string>analyze</string>
+        <string>weekly</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>{SENTINEL_HOME}</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PYTHONPATH</key>
+        <string>{SENTINEL_HOME}</string>
+        <key>PATH</key>
+        <string>{HOME}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>HOME</key>
+        <string>{HOME}</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <!-- 周日 22:00 跑所有 alert_enabled topic 的 7d 周报 -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Weekday</key><integer>0</integer>
+        <key>Hour</key><integer>22</integer>
+        <key>Minute</key><integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>{SENTINEL_HOME}/logs/weekly.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>{SENTINEL_HOME}/logs/weekly.err.log</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

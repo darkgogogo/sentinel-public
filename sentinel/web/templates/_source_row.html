@@ -1,0 +1,44 @@
+{# struggling row reuse: 同 healthy row 但多一列 kind #}
+<tr>
+  <td class="mono">#{{ s.id }}</td>
+  <td><strong>{{ s.kind }}</strong></td>
+  <td class="mono small">{{ s.identifier }}</td>
+  <td>{{ s.display_name or '—' }}</td>
+  <td>
+    <span id="enabled-badge-{{ s.id }}">
+      {% if s.enabled %}<span class="badge ok">enabled</span>
+      {% else %}<span class="badge cold">disabled</span>{% endif %}
+    </span>
+  </td>
+  <td><span class="badge warn">{{ s.failure_count }}</span></td>
+  <td class="action-cell">
+    <div class="action-row">
+      <details>
+        <summary class="btn small">编辑</summary>
+        <div class="popover">
+          <form method="post" action="/sources/{{ s.id }}/update" class="vform">
+            <div class="field">
+              <label>identifier</label>
+              <input type="text" name="identifier" value="{{ s.identifier }}">
+            </div>
+            <div class="field">
+              <label>显示名</label>
+              <input type="text" name="display_name" value="{{ s.display_name or '' }}">
+            </div>
+            <button type="submit" class="btn small primary">保存</button>
+          </form>
+        </div>
+      </details>
+      <button class="btn small"
+              hx-post="/sources/{{ s.id }}/toggle"
+              hx-target="#enabled-badge-{{ s.id }}"
+              hx-swap="innerHTML">
+        {% if s.enabled %}disable{% else %}enable{% endif %}
+      </button>
+      <form method="post" action="/sources/{{ s.id }}/delete"
+            onsubmit="return confirm('确定删除 source #{{ s.id }}（{{ s.identifier }}）？\n将同时删除 {{ s.message_count or 0 }} 条历史 messages（不可恢复）');">
+        <button class="btn small danger" type="submit">删</button>
+      </form>
+    </div>
+  </td>
+</tr>

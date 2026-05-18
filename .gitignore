@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+*.session
+*.session-journal
+
+# Runtime
+db/*.db
+db/*.db-shm
+db/*.db-wal
+logs/
+*.log
+
+# Secrets (NEVER commit)
+secrets/.env
+secrets/*.session
+secrets/.host
+
+# Local config (含本机路径) — 用 config.yaml.example 作为模板
+config.yaml
+
+# Service control files
+.pause-*
+
+# OS
+.DS_Store

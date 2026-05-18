@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Sentinel · Dashboard{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>Dashboard</h1>
+    <p class="page-sub">
+      <span class="em"><span>{{ topics | length }}</span> topics</span>
+      <span class="sep">·</span>
+      <span class="em"><span>{{ sources | length }}</span> active sources</span>
+    </p>
+  </div>
+  <div class="page-actions">{% include "_auto_refresh.html" %}</div>
+</header>
+
+{% if running_now %}
+<div class="inline-banner info">
+  <strong>⏳ 正在跑</strong>
+  {% for r in running_now %}
+    <span class="mono">{{ r.service }}</span><span class="muted small"> · {{ r.started_at[:16] }}</span>{% if not loop.last %} · {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if high_audits or medium_audits %}
+<div class="inline-banner {% if high_audits %}warn{% endif %}">
+  <strong>
+    {% if high_audits %}⚠{% else %}ⓘ{% endif %}
+    覆盖审计 ·
+    {% if high_audits %}<span style="color:var(--warn)">{{ high_audits | length }} 个主题信号严重不足</span>{% endif %}
+    {% if high_audits and medium_audits %} · {% endif %}
+    {% if medium_audits %}{{ medium_audits | length }} 个建议补充覆盖{% endif %}
+  </strong>
+  <ul>
+  {% for a in (high_audits + medium_audits)[:5] %}
+    <li>
+      {% if a.severity == 'high' %}<span class="badge warn">high</span>
+      {% else %}<span class="badge paused">medium</span>{% endif %}
+      <strong>{{ a.topic_name }}</strong>
+      <a href="/topics/{{ a.topic_id }}?action=fix-coverage" class="muted small">→ 修复覆盖</a>
+    </li>
+  {% endfor %}
+  </ul>
+  {% if (high_audits + medium_audits) | length > 5 %}
+  <p class="muted small">还有 {{ (high_audits + medium_audits) | length - 5 }} 个 …</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if struggling_sources %}
+<div class="inline-banner">
+  <strong>⚠ 失败接近阈值的信源</strong>
+  <ul>
+  {% for s in struggling_sources %}
+    <li>
+      <span class="badge warn">{{ s.failure_count }}/{{ failure_limit }}</span>
+      <span class="mono small">[{{ s.kind }}] {{ s.identifier }}</span>
+      {% if s.display_name %}<span class="muted">({{ s.display_name }})</span>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+  <p class="muted">连续失败 {{ failure_limit }} 次自动 disable · <a href="/sources">/sources →</a></p>
+</div>
+{% endif %}
+
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <div class="kpi-l">24h 新增消息</div>
+    <div class="kpi-n">{{ '{:,}'.format(msgs_24h) }}</div>
+    <div class="kpi-sub">累计 {{ '{:,}'.format(msg_count) }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-l">24h 告警</div>
+    <div class="kpi-n">{{ alerts_24h }}<span class="kpi-frac">/ {{ alerts_24h_sent }} push</span></div>
+    <div class="kpi-sub">累计 {{ alert_count }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-l">30 天 LLM 成本</div>
+    <div class="kpi-n">${{ '%.2f'|format(cost_30d) }}</div>
+    <div class="kpi-sub"><a href="/cost">查看详情 →</a></div>
+  </div>
+</div>
+
+<section class="grid-2">
+  <div class="card">
+    <h2>7 天消息趋势</h2>
+    <div class="bar-chart">
+      {% for d, c in msg_trend %}
+      <div class="bar-col" title="{{ d }}: {{ c }} 条">
+        <div class="bar-body" style="height: {{ ((c / trend_max) * 100) | round(1) }}%"></div>
+        <div class="bar-label">{{ d[3:] }}</div>
+        <div class="bar-n">{{ c }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Service 健康 <small class="muted"><a href="/status">控制 →</a></small></h2>
+    <table class="data">
+      <tbody>
+      {% for svc, info in svc_status.items() %}
+        <tr>
+          <td>
+            <strong>{{ svc }}</strong>
+            {% if svc_pause[svc].paused %}<span class="badge paused">paused</span>{% endif %}
+          </td>
+          <td>
+            {% if info %}<span class="badge ok">✓ active</span>
+            {% else %}<span class="badge cold">未跑过</span>{% endif %}
+          </td>
+          <td class="mono small muted nowrap">
+            {% if info %}{{ info.started_at[:16] }}{% else %}—{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2>最近告警 <small class="muted"><a href="/alerts">查看全部 →</a></small></h2>
+  {% if recent_alerts %}
+    <table class="data">
+      <thead><tr><th>时间</th><th>主题</th><th>headline / summary</th><th>push</th><th>反馈</th></tr></thead>
+      <tbody>
+      {% for a in recent_alerts %}
+        <tr>
+          <td class="mono nowrap small">{{ a.triggered_at[:16] }}</td>
+          <td><a href="/alerts?topic_id={{ a.topic_id }}">{{ a.topic_name or '?' }}</a></td>
+          <td>
+            <strong>{{ a.headline }}</strong>
+            <div class="muted small">{{ a.summary[:140] }}{% if a.summary|length > 140 %}…{% endif %}</div>
+          </td>
+          <td>
+            {% if a.push_status == 'sent' %}<span class="badge ok">sent</span>
+            {% elif a.push_status == 'failed' %}<span class="badge warn">failed</span>
+            {% else %}<span class="badge cold">{{ a.push_status }}</span>{% endif %}
+          </td>
+          <td>
+            {% if a.user_label == 'true_positive' %}⭐
+            {% elif a.user_label == 'false_positive' %}🚫
+            {% else %}<span class="muted">—</span>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="muted">暂无告警</p>
+  {% endif %}
+</section>
+
+<section class="grid-2 grid-2-eq">
+  <div class="card">
+    <h2>最近报告 <small class="muted"><a href="/reports">全部 →</a></small></h2>
+    {% if recent_reports %}
+      <ul class="list">
+      {% for r in recent_reports %}
+        <li>
+          <span class="badge cold">{{ r.type }}</span>
+          <a href="/reports/view?rel={{ r.rel | urlencode }}">{{ r.name }}</a>
+          <span class="ts mono">{{ r.mtime.strftime('%m-%d') }}</span>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">暂无报告</p>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h2>最近告警归档</h2>
+    {% if recent_archives %}
+      <ul class="list">
+      {% for a in recent_archives %}
+        <li>
+          <a href="/reports/view?rel={{ a.rel | urlencode }}">{{ a.name }}</a>
+          <span class="ts mono">{{ a.mtime.strftime('%m-%d') }}</span>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">暂无归档</p>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

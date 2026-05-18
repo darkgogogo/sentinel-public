@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Sentinel v2{% endblock %}</title>
+{% if request.query_params.get('refresh') == '1' %}
+<meta http-equiv="refresh" content="30">
+{% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/htmx.org@2.0.4"></script>
+<link rel="stylesheet" href="/static/style.css?v={{ static_v }}">
+</head>
+<body>
+{% set current_path = request.url.path %}
+<header class="topbar">
+  <div class="brand">
+    <a href="/" class="brand-link">⚡ Sentinel <span class="ver">v2.2</span></a>
+    <span class="subtitle">通用主题舆情雷达</span>
+  </div>
+  <nav class="nav">
+    {% set nav_items = [
+      ('/', 'Dashboard'),
+      ('/alerts', '告警'),
+      ('/reports', '报告'),
+      ('/topics', '主题'),
+      ('/sources', '信源'),
+      ('/status', '运行状态'),
+      ('/cost', '成本'),
+    ] %}
+    {% for path, label in nav_items %}
+      {% set is_active = (path == '/' and current_path == '/') or (path != '/' and current_path.startswith(path)) %}
+      <a href="{{ path }}"{% if is_active %} class="active"{% endif %}>{{ label }}</a>
+    {% endfor %}
+  </nav>
+</header>
+
+{# Toast 区域：URL ?msg=<key> 触发，3s 自动消失。msg key 映射在下方 dict。 #}
+{% set msg_key = request.query_params.get('msg') %}
+{% if msg_key %}
+{% set toast_map = {
+  'added': ('success', '已添加'),
+  'updated': ('success', '已更新'),
+  'deleted': ('success', '已删除'),
+  'toggled': ('success', '已切换'),
+  'paused': ('success', '已暂停'),
+  'resumed': ('success', '已恢复'),
+  'linked': ('success', '已关联'),
+  'unlinked': ('success', '已解绑'),
+  'labeled': ('success', '已标记'),
+  'triggered': ('success', '已触发 — 在后台跑'),
+  'kw_added': ('success', '关键词已加'),
+  'kw_removed': ('success', '关键词已移除'),
+  'executed': ('success', '✓ audit 已执行（信源已加 / 已 link）'),
+  'executed_empty': ('info', '已标记完成（未勾选任何信源）'),
+  'dismissed': ('info', '已忽略，后续按选定时长再提醒'),
+  'failed': ('err', '操作失败'),
+} %}
+{% set toast = toast_map.get(msg_key, ('info', msg_key)) %}
+<div class="toast toast-{{ toast[0] }}" id="toast">{{ toast[1] }}</div>
+<script>
+  setTimeout(() => {
+    const t = document.getElementById('toast');
+    if (t) { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }
+  }, 3000);
+</script>
+{% endif %}
+
+<main class="main">
+{% block content %}{% endblock %}
+</main>
+<footer class="footer">
+  <span>Sentinel v2.2</span>
+  <span>本机 only · 127.0.0.1:8080</span>
+</footer>
+</body>
+</html>

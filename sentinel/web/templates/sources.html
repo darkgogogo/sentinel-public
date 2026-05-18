@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}Sentinel · 信源{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>信源</h1>
+    <p class="page-sub">
+      <span class="em">{{ total_count }}</span> 个信源
+      <span class="sep">·</span>
+      支持 <span class="em">{{ kinds | length }}</span> 种 collector kind
+      {% if struggling %}<span class="sep">·</span><span style="color:var(--warn)">{{ struggling | length }} 个失败中</span>{% endif %}
+      {% if filter_industry or filter_topic_id %}<span class="sep">·</span><span style="color:var(--accent)">已应用筛选</span>{% endif %}
+    </p>
+  </div>
+  <div class="page-actions">
+    <a href="#add" class="btn primary">+ 新建信源</a>
+  </div>
+</header>
+
+<form method="get" action="/sources" class="filter-bar">
+  <label>行业
+    <select name="industry">
+      <option value="">全部</option>
+      {% for ind in industries %}
+      <option value="{{ ind }}" {% if filter_industry == ind %}selected{% endif %}>{{ ind }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>主题
+    <select name="topic_id">
+      <option value="">全部</option>
+      {% for t in all_topics_flat %}
+      <option value="{{ t.id }}" {% if filter_topic_id == t.id %}selected{% endif %}>
+        [{{ t.industry }}] {{ t.name }}
+      </option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="btn small primary">筛选</button>
+  {% if filter_industry or filter_topic_id %}
+  <a href="/sources" class="btn small">清除</a>
+  {% endif %}
+</form>
+
+{% if struggling %}
+<div class="inline-banner">
+  <strong>⚠ 失败中的信源</strong>
+  <ul>
+  {% for s in struggling %}
+    <li>
+      <span class="badge warn">{{ s.failure_count }}</span>
+      <span class="mono small">[{{ s.kind }}] {{ s.identifier }}</span>
+      {% if s.display_name %}<span class="muted">({{ s.display_name }})</span>{% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% for kind, sources in by_kind.items() %}
+<section class="card">
+  <h2>{{ kind }} <small class="muted">{{ sources | length }} 个</small></h2>
+  <table class="data">
+    <thead><tr>
+      <th>identifier</th><th>名称</th><th>关联主题</th><th>状态</th><th>失败</th><th>创建</th><th></th>
+    </tr></thead>
+    <tbody>
+    {% for s in sources %}
+      <tr>
+        <td class="mono small">{{ s.identifier }}</td>
+        <td>{{ s.display_name or '—' }}</td>
+        <td>
+          {% if s._topics %}
+            <div class="topic-chips">
+            {% for t in s._topics[:2] %}
+              <a href="/sources?topic_id={{ t.id }}" class="topic-chip" title="筛选只看此主题的源">
+                <span class="muted">[{{ t.industry }}]</span> {{ t.name }}
+              </a>
+            {% endfor %}
+            {% if s._topics | length > 2 %}
+              <span class="hover-tooltip" tabindex="0">
+                <span class="muted small">+{{ s._topics | length - 2 }}</span>
+                <span class="tooltip-content">
+                  {% for t in s._topics %}<div>[{{ t.industry }}] {{ t.name }}</div>{% endfor %}
+                </span>
+              </span>
+            {% endif %}
+            </div>
+          {% else %}
+            <span class="muted small">未关联</span>
+          {% endif %}
+        </td>
+        <td>
+          <span id="enabled-badge-{{ s.id }}">
+            {% if s.enabled %}<span class="badge ok">enabled</span>
+            {% else %}<span class="badge cold">disabled</span>{% endif %}
+          </span>
+        </td>
+        <td>
+          {% if s.failure_count > 0 %}<span class="badge warn">{{ s.failure_count }}</span>
+          {% else %}<span class="muted">0</span>{% endif %}
+        </td>
+        <td class="muted mono small">{{ s.created_at[:10] }}</td>
+        <td class="action-cell">
+          <div class="action-row">
+            <details>
+              <summary class="btn small">编辑</summary>
+              <div class="popover">
+                <form method="post" action="/sources/{{ s.id }}/update" class="vform">
+                  <div class="field">
+                    <label>identifier</label>
+                    <input type="text" name="identifier" value="{{ s.identifier }}">
+                  </div>
+                  <div class="field">
+                    <label>显示名</label>
+                    <input type="text" name="display_name" value="{{ s.display_name or '' }}">
+                  </div>
+                  <button type="submit" class="btn small primary">保存</button>
+                </form>
+              </div>
+            </details>
+            <button class="btn small"
+                    hx-post="/sources/{{ s.id }}/toggle"
+                    hx-target="#enabled-badge-{{ s.id }}"
+                    hx-swap="innerHTML">
+              {% if s.enabled %}disable{% else %}enable{% endif %}
+            </button>
+            <form method="post" action="/sources/{{ s.id }}/delete"
+                  onsubmit="return confirm('删除 [{{ s.kind }}] {{ s.identifier }} ?\n将同时删除 {{ s.message_count or 0 }} 条历史 messages（不可恢复）');">
+              <button class="btn small danger" type="submit">删</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+
+{% if not by_kind and not struggling %}
+<p class="muted">
+  {% if filter_industry or filter_topic_id %}
+    无匹配信源。<a href="/sources">清除筛选</a> 看全部。
+  {% else %}
+    暂无信源。用下方表单加一个。
+  {% endif %}
+</p>
+{% endif %}
+
+<section class="card" id="add">
+  <h2>新建信源</h2>
+
+  <!-- 用例 → kind 决策导航 -->
+  <details class="kind-guide" open>
+    <summary><strong>📖 选哪个 kind？</strong> <span class="muted small">点击展开/收起 5 类 collector 速查</span></summary>
+    <table class="data" style="margin-top: 12px;">
+      <thead><tr><th>想监控什么</th><th>选 kind</th><th>identifier 例</th></tr></thead>
+      <tbody>
+        <tr><td>Telegram 公开频道 / 群组</td><td><code>telegram</code></td><td>@gfwknocker · @durov</td></tr>
+        <tr><td>普通 RSS / Atom Feed</td><td><code>rss</code></td><td>https://example.com/feed.xml</td></tr>
+        <tr><td><b>V2EX / B 站 / 即刻 等社交平台</b></td><td><code>rss</code> + 本机 RSSHub</td><td>http://127.0.0.1:1200/v2ex/topics/latest</td></tr>
+        <tr><td>Twitter 个人账号 / 关键词</td><td><code>twitter</code></td><td>elonmusk（不带 @）</td></tr>
+        <tr><td>Reddit 子版块</td><td><code>reddit</code></td><td>selfhosted · ProtonVPN</td></tr>
+        <tr><td><b>知乎 / 小红书 / 微博</b>（强反爬）</td><td><code>inbox</code> 兜底</td><td>web-access 落 .md 到 inbox/&lt;slug&gt;/</td></tr>
+      </tbody>
+    </table>
+  </details>
+
+  <form method="post" action="/sources/add" class="form-grid" style="margin-top: var(--s-5);">
+    <div class="form-row cols-3">
+      <div class="field">
+        <label>kind</label>
+        <select name="kind" required id="kind-select">
+          {% for k in kinds %}{% if k != 'social' %}<option value="{{ k }}">{{ k }}</option>{% endif %}{% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>identifier <span class="field-hint" id="ident-hint"></span></label>
+        <input type="text" name="identifier" id="ident-input" placeholder="" required>
+      </div>
+      <div class="field">
+        <label>显示名 <span class="field-hint">可选</span></label>
+        <input type="text" name="display_name" placeholder="人类可读名">
+      </div>
+    </div>
+    <div class="form-actions">
+      <div class="checkbox-group">
+        <label class="checkbox-label">
+          <input type="checkbox" name="skip_resolve" value="true">
+          跳过 resolve 验证 <span class="muted small">(输错风险自负)</span>
+        </label>
+      </div>
+      <button type="submit" class="btn primary">添加信源</button>
+    </div>
+
+    <!-- 5 个 kind 的详细 tip 区，按 dropdown 切换 -->
+    <div class="kind-tip" data-kind="telegram" style="display:none">
+      <strong>💬 Telegram</strong>
+      <ul class="muted small">
+        <li>格式 <code>@channel_name</code>（公开频道）或纯数字 chat_id（群组）</li>
+        <li>前置条件：<code>secrets/.env</code> 配 <code>TELEGRAM_API_ID</code> + <code>TELEGRAM_API_HASH</code>，首次跑 <code>collect</code> 会用 telethon 登录</li>
+        <li>示例：<code>@gfwknocker</code> · <code>@durov</code></li>
+        <li>限制：需公开频道或本帐号已加入的群组；私聊不支持</li>
+      </ul>
+    </div>
+
+    <div class="kind-tip" data-kind="rss" style="display:none">
+      <strong>📡 RSS / Atom Feed</strong>
+      <ul class="muted small">
+        <li>格式：完整 URL，如 <code>https://example.com/feed.xml</code></li>
+        <li>本机 RSSHub 已长驻 <code>127.0.0.1:1200</code>，社交平台用本机 URL 走 RSSHub：</li>
+      </ul>
+      <div class="rsshub-examples mono small">
+        <div><span class="muted">V2EX 最新</span>  http://127.0.0.1:1200/v2ex/topics/latest</div>
+        <div><span class="muted">V2EX 热门</span>  http://127.0.0.1:1200/v2ex/topics/hot</div>
+        <div><span class="muted">B 站动态</span>  http://127.0.0.1:1200/bilibili/user/dynamic/{uid}</div>
+        <div><span class="muted">即刻用户</span>  http://127.0.0.1:1200/jike/user/{user_id}</div>
+        <div><span class="muted">GitHub release</span>  http://127.0.0.1:1200/github/repos/{owner}/{repo}</div>
+        <div><span class="muted">Solidot</span>  https://www.solidot.org/index.rss</div>
+      </div>
+      <p class="muted small" style="margin-top:8px">
+        ⚠️ 知乎 / 小红书 / 微博 反爬太强，本机 RSSHub 也常 503 → 改用 <code>inbox</code> 兜底。
+        完整 routes：<a href="https://docs.rsshub.app/" target="_blank">docs.rsshub.app</a>
+      </p>
+    </div>
+
+    <div class="kind-tip" data-kind="twitter" style="display:none">
+      <strong>🐦 Twitter / X</strong>
+      <ul class="muted small">
+        <li>格式：用户名（不带 @），如 <code>elonmusk</code></li>
+        <li>前置条件：<code>secrets/.env</code> 配 <code>SOCIALDATA_API_KEY</code>（付费 API · ~$10/月）</li>
+        <li>示例：<code>vpnnews_cn</code> · <code>jack</code></li>
+        <li>限制：仅支持单一用户 timeline；搜索 / hashtag 请用 RSSHub <code>/twitter/keyword/...</code></li>
+      </ul>
+    </div>
+
+    <div class="kind-tip" data-kind="reddit" style="display:none">
+      <strong>🤖 Reddit</strong>
+      <ul class="muted small">
+        <li>格式：subreddit 名（不带 r/），如 <code>selfhosted</code></li>
+        <li>实现：直接抓 reddit.com 的 <code>.rss</code> 端点，无需 API key</li>
+        <li>示例：<code>selfhosted</code> · <code>VPN</code> · <code>ProtonVPN</code> · <code>privacy</code></li>
+        <li>限制：reddit 偶尔限流；多个 subreddit 各自建一个 source</li>
+      </ul>
+    </div>
+
+    <div class="kind-tip" data-kind="inbox" style="display:none">
+      <strong>📥 Inbox（web-access 兜底）</strong>
+      <ul class="muted small">
+        <li>格式：<code>&lt;topic-slug&gt;</code>，对应 KB 目录 <code>inbox/&lt;slug&gt;/*.md</code></li>
+        <li>用法：用 <code>web-access</code> skill 抓任意页面 → 落 markdown 到该目录 → 下次 collect 自动 ingest（改名 <code>.md.ingested</code> 防重复）</li>
+        <li>示例 slug：<code>my-topic</code> · <code>another-topic</code>（直接用 topic 的 slug，斜杠空格自动转 -）</li>
+        <li>适用：知乎话题 / 小红书 / 微博搜索 等强反爬平台 + 长尾源 + 一次性调研落地</li>
+        <li>注意：source 还需 link 到对应 topic（在 topic 详情页操作）</li>
+      </ul>
+    </div>
+  </form>
+  <script>
+    const hints = {
+      'telegram': '@channel_name',
+      'rss': 'https://example.com/feed.xml',
+      'twitter': 'username (不带 @)',
+      'reddit': 'subreddit_name',
+      'inbox': '<topic-slug>',
+    };
+    const sel = document.getElementById('kind-select');
+    const hint = document.getElementById('ident-hint');
+    const input = document.getElementById('ident-input');
+    const tipBoxes = document.querySelectorAll('.kind-tip');
+    function updateHint() {
+      hint.textContent = hints[sel.value] || '';
+      input.placeholder = hints[sel.value] || '';
+      // 按 dropdown 切换显示对应 kind 的详细 tip
+      tipBoxes.forEach(box => {
+        box.style.display = (box.dataset.kind === sel.value) ? 'block' : 'none';
+      });
+    }
+    sel.addEventListener('change', updateHint);
+    updateHint();
+  </script>
+</section>
+
+{% endblock %}

@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Sentinel · 运行状态{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>运行状态</h1>
+    <p class="page-sub">
+      最近 <span class="em">{{ limit }}</span> 次 service_runs
+      <span class="sep">·</span>
+      <span class="em">{{ runs | length }}</span> 条返回
+      {% if running_now %}<span class="sep">·</span><span style="color:var(--accent)">{{ running_now | length }} 个正在跑</span>{% endif %}
+    </p>
+  </div>
+  <div class="page-actions">{% include "_auto_refresh.html" %}</div>
+</header>
+
+{% if watch_state == 'running' %}
+{# 用户刚触发 + 还在跑：每 5s 自动刷新 #}
+<meta http-equiv="refresh" content="5">
+<div class="inline-banner info">
+  <strong>⏳ {{ watch_svc }} 正在跑</strong>
+  <span class="muted small">(页面每 5s 自动刷新检查完成)</span>
+  {% for r in running_now if r.service == watch_svc %}
+    <div class="muted small" style="margin-top:4px">
+      started <span class="mono">{{ r.started_at[:16] }}</span>
+    </div>
+  {% endfor %}
+</div>
+{% elif watch_state == 'done' and watch_result %}
+{# 刚跑完：显示结果摘要 + 单次链接（点击进新 url 不再 watch）#}
+<div class="inline-banner" style="background:var(--ok-soft); border-color:#86efac; color:var(--ok)">
+  <strong>✓ {{ watch_svc }} 已完成</strong>
+  <span class="muted small">
+    status=<span class="mono">{{ watch_result.status }}</span>
+    {% if watch_result.messages_collected %} · messages +{{ watch_result.messages_collected }}{% endif %}
+    {% if watch_result.alerts_triggered %} · alerts +{{ watch_result.alerts_triggered }}{% endif %}
+    {% if watch_result.llm_cost_usd %} · cost ${{ '%.4f'|format(watch_result.llm_cost_usd) }}{% endif %}
+  </span>
+  <p style="margin-top:6px">
+    <a href="/status" class="btn small">关闭追踪</a>
+  </p>
+</div>
+{% if watch_result.error %}
+<div class="inline-banner warn">
+  <strong>partial / error 详情</strong>
+  <p class="mono small">{{ watch_result.error }}</p>
+</div>
+{% endif %}
+{% endif %}
+
+{% if running_now and not watch_state %}
+<div class="inline-banner info">
+  <strong>⏳ 正在跑</strong>
+  {% for r in running_now %}
+    <span class="mono">{{ r.service }}</span><span class="muted small"> · started {{ r.started_at[:16] }}</span>{% if not loop.last %} · {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if cost_summary %}
+<section class="card">
+  <h2>LLM 成本 <small class="muted">最近 30 天</small> · <a href="/cost">月聚合</a></h2>
+  <table class="data">
+    <thead><tr><th>service</th><th>调用次数</th><th>tokens in</th><th>tokens out</th><th>cost (USD)</th></tr></thead>
+    <tbody>
+    {% for svc, c in cost_summary.items() %}
+      <tr>
+        <td><strong>{{ svc }}</strong></td>
+        <td>{{ c.runs }}</td>
+        <td>{{ '{:,}'.format(c.tokens_in) }}</td>
+        <td>{{ '{:,}'.format(c.tokens_out) }}</td>
+        <td class="mono">${{ '%.4f'|format(c.cost_usd) }}</td>
+      </tr>
+    {% endfor %}
+      <tr class="total-row">
+        <td><strong>合计</strong></td>
+        <td>{{ cost_total.runs }}</td>
+        <td>{{ '{:,}'.format(cost_total.tokens_in) }}</td>
+        <td>{{ '{:,}'.format(cost_total.tokens_out) }}</td>
+        <td class="mono"><strong>${{ '%.4f'|format(cost_total.cost_usd) }}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Service 控制 <small class="muted">active = 等下次 launchd 触发 · paused = 停了</small></h2>
+  <table class="data">
+    <thead><tr><th>service</th><th>状态</th><th>上次成功</th><th>下次触发</th><th>操作</th></tr></thead>
+    <tbody>
+    {% for svc, info in pause.items() %}
+      <tr>
+        <td><strong>{{ svc }}</strong></td>
+        <td>
+          {% if info.paused %}<span class="badge paused">paused</span>
+          {% else %}<span class="badge ok">active</span>{% endif %}
+        </td>
+        <td class="mono small muted">
+          {% if last_success.get(svc) %}{{ last_success[svc][:16] }}{% else %}—{% endif %}
+        </td>
+        <td class="mono small muted">{{ next_schedule.get(svc, '?') }}</td>
+        <td class="action-cell">
+          <div class="action-row">
+            {% if info.paused %}
+            <form method="post" action="/services/{{ svc }}/resume">
+              <button class="btn small" type="submit">恢复</button>
+            </form>
+            {% else %}
+            <form method="post" action="/services/{{ svc }}/pause" class="form-inline" style="gap:4px">
+              <input type="number" name="days" min="0" value="0" title="0 = 永久" style="width:50px; height:28px; padding:0 8px">
+              <button class="btn small" type="submit">暂停</button>
+            </form>
+            {% endif %}
+            {% if svc in ('collect', 'alert') %}
+            <form method="post" action="/services/{{ svc }}/run">
+              <button class="btn small primary" type="submit">立即跑</button>
+            </form>
+            {% elif svc in ('analyze', 'advisor') %}
+            <span class="muted small">→ 主题详情页</span>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>历史 run <small class="muted">显示 {{ runs | length }} / 共 {{ limit }} 上限</small></h2>
+  <form method="get" action="/status" class="filter-bar" style="margin-bottom: 12px">
+    <label>显示
+      <select name="limit" onchange="this.form.submit()">
+        {% for n in [50, 100, 200, 500, 1000] %}
+        <option value="{{ n }}" {% if limit == n %}selected{% endif %}>最近 {{ n }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+  {% if runs %}
+  <div class="table-wrap">
+  <table class="data wide">
+    <thead><tr>
+      <th>service</th><th>开始</th><th>状态</th>
+      <th>messages</th><th>alerts</th>
+      <th>LLM in/out</th><th>cost</th><th>error</th>
+    </tr></thead>
+    <tbody>
+    {% for r in runs %}
+      <tr class="status-{{ r.status }}">
+        <td><strong>{{ r.service }}</strong></td>
+        <td class="mono nowrap small">{{ r.started_at[:16] }}</td>
+        <td>
+          {% if r.status == 'success' %}<span class="badge ok">✓</span>
+          {% elif r.status == 'failed' %}<span class="badge warn">✗ failed</span>
+          {% elif r.status == 'skipped' %}<span class="badge cold">skip</span>
+          {% elif r.status == 'running' %}<span class="badge">⏳ running</span>
+          {% else %}<span class="badge">{{ r.status }}</span>{% endif %}
+        </td>
+        <td>{{ r.messages_collected or '—' }}</td>
+        <td>{{ r.alerts_triggered or '—' }}</td>
+        <td class="mono small">
+          {% if r.llm_tokens_in or r.llm_tokens_out %}
+            {{ r.llm_tokens_in or 0 }}/{{ r.llm_tokens_out or 0 }}
+          {% else %}—{% endif %}
+        </td>
+        <td class="mono">{% if r.llm_cost_usd %}${{ '%.4f'|format(r.llm_cost_usd) }}{% else %}—{% endif %}</td>
+        <td class="small muted err-cell">
+          {% if r.error %}
+            <span class="hover-tooltip" tabindex="0">
+              {{ r.error[:60] }}{% if r.error|length > 60 %}…{% endif %}
+              <span class="tooltip-content" style="min-width:400px">{{ r.error }}</span>
+            </span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <p class="muted">暂无运行记录</p>
+  {% endif %}
+</section>
+
+{% endblock %}

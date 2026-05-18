@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sentinel v2 · 通用主题舆情雷达 · 使用文档</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf9f6;
+    --bg-sidebar: #f1efea;
+    --bg-card: #ffffff;
+    --bg-code: #f4f2ed;
+    --bg-pill: #ebe7df;
+    --ink: #0a1f3d;
+    --ink-soft: #2c3e5e;
+    --ink-mute: #6b7689;
+    --line: #e0ddd5;
+    --line-soft: #ebe8e1;
+    --accent: #1a2e5c;
+    --accent-soft: #5a6f9c;
+    --accent-tint: rgba(26,46,92,.06);
+    --green: #2e7a4e;
+    --amber: #a7641a;
+    --red: #9a3030;
+    --serif: "Noto Serif SC", "Source Han Serif SC", serif;
+    --sans: "Inter", "Noto Sans SC", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, monospace;
+    --sidebar-w: 280px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--ink); line-height: 1.65; font-size: 15px; -webkit-font-smoothing: antialiased; }
+
+  .shell { display: grid; grid-template-columns: var(--sidebar-w) 1fr; min-height: 100vh; }
+  .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto; background: var(--bg-sidebar); border-right: 1px solid var(--line); padding: 32px 24px; }
+  .sb-brand { font-family: var(--mono); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--ink-mute); margin-bottom: 8px; }
+  .sb-title { font-family: var(--serif); font-weight: 700; font-size: 18px; line-height: 1.3; margin-bottom: 4px; color: var(--ink); }
+  .sb-version { font-family: var(--mono); font-size: 11px; color: var(--ink-mute); margin-bottom: 24px; }
+  .sb-nav { list-style: none; border-top: 1px solid var(--line-soft); padding-top: 20px; }
+  .sb-nav a { display: block; padding: 7px 12px; margin-left: -12px; border-radius: 6px; color: var(--ink-soft); text-decoration: none; font-size: 13.5px; transition: all .15s ease; border-left: 2px solid transparent; }
+  .sb-nav a:hover { background: rgba(0,0,0,.04); }
+  .sb-section-label { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-mute); opacity: .7; margin-top: 20px; margin-bottom: 8px; }
+  .sb-footer { margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--line-soft); font-family: var(--mono); font-size: 10px; letter-spacing: .12em; color: var(--ink-mute); line-height: 1.6; }
+
+  .main { padding: 64px 80px 96px; max-width: 1080px; }
+  section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  h1 { font-family: var(--serif); font-weight: 700; font-size: 38px; line-height: 1.15; margin-bottom: 16px; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: 26px; line-height: 1.25; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  h3 { font-family: var(--serif); font-weight: 600; font-size: 17px; margin-top: 24px; margin-bottom: 10px; }
+  p { margin-bottom: 14px; color: var(--ink-soft); }
+  p.lead { font-size: 17px; line-height: 1.65; color: var(--ink-soft); margin-bottom: 28px; }
+  strong { color: var(--ink); font-weight: 600; }
+  a { color: var(--accent); text-decoration: none; border-bottom: 1px solid rgba(26,46,92,.25); }
+  a:hover { border-bottom-color: var(--accent); }
+
+  .hero-meta { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .badge { display: inline-flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); padding: 4px 9px; background: var(--bg-pill); border-radius: 3px; }
+  .badge.primary { color: var(--accent); background: rgba(26,46,92,.08); }
+  .badge.ok { color: var(--green); background: rgba(46,122,78,.08); }
+
+  code { font-family: var(--mono); font-size: .92em; background: var(--bg-code); padding: 2px 7px; border-radius: 4px; color: var(--ink); border: 1px solid var(--line-soft); }
+  pre { font-family: var(--mono); font-size: 13px; background: var(--bg-code); padding: 14px 18px; border-radius: 8px; border: 1px solid var(--line-soft); overflow-x: auto; line-height: 1.55; margin: 12px 0 20px; }
+  pre code { background: transparent; border: 0; padding: 0; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--bg-card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 13.5px; margin: 14px 0 24px; }
+  th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { background: var(--bg-pill); font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
+  tr:last-child td { border-bottom: 0; }
+
+  ul, ol { padding-left: 20px; margin-bottom: 14px; color: var(--ink-soft); }
+  li { margin-bottom: 6px; }
+
+  .principles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin: 16px 0 24px; }
+  .principle { background: var(--bg-card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; border-left: 3px solid var(--accent); }
+  .principle .pn-name { font-family: var(--serif); font-weight: 600; font-size: 15px; margin-bottom: 4px; color: var(--ink); }
+  .principle .pn-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.55; }
+
+  .callout { padding: 14px 18px; border-radius: 6px; margin: 14px 0 20px; font-size: 14px; }
+  .callout.warn { border-left: 3px solid var(--amber); background: rgba(167,100,26,.06); color: var(--ink-soft); }
+  .callout.info { border-left: 3px solid var(--accent); background: var(--accent-tint); color: var(--ink-soft); }
+  .callout.ok { border-left: 3px solid var(--green); background: rgba(46,122,78,.06); color: var(--ink-soft); }
+
+  .scenarios { display: grid; gap: 12px; margin: 14px 0 24px; }
+  .scenario { background: var(--bg-card); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; }
+  .scenario-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
+  .scenario-when { font-family: var(--serif); font-weight: 600; font-size: 15px; }
+  .scenario-skill { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; color: var(--accent); }
+  .scenario-chat { display: grid; gap: 6px; font-size: 13.5px; }
+  .scenario-row { display: grid; grid-template-columns: 60px 1fr; gap: 14px; }
+  .scenario-row .who { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; padding-top: 2px; }
+  .scenario-row.you .who { color: #246b4c; }
+  .scenario-row.claude .who { color: #4a3b80; }
+  .scenario-row.sys .who { color: var(--ink-mute); }
+  .scenario-row .body { color: var(--ink-soft); line-height: 1.55; }
+
+  .versions { list-style: none; padding-left: 0; }
+  .versions li { background: var(--bg-card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 6px; padding: 12px 18px; margin-bottom: 10px; }
+  .versions .v-name { font-family: var(--serif); font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .versions .v-date { font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; color: var(--ink-mute); margin-bottom: 6px; }
+  .versions .v-body { font-size: 13.5px; color: var(--ink-soft); line-height: 1.55; }
+
+  .arch-img { max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; margin: 12px 0 22px; }
+
+  .svc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0 24px; }
+  .svc-card { background: var(--bg-card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; border-top: 3px solid var(--accent); }
+  .svc-card.star { border-top-color: var(--amber); }
+  .svc-name { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--accent); margin-bottom: 4px; }
+  .svc-card.star .svc-name { color: var(--amber); }
+  .svc-trigger { font-size: 11.5px; color: var(--ink-mute); margin-bottom: 8px; font-family: var(--mono); }
+  .svc-desc { font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+
+  details { background: var(--bg-card); border: 1px solid var(--line); border-radius: 6px; margin-bottom: 10px; overflow: hidden; }
+  details summary { padding: 12px 16px; cursor: pointer; font-weight: 500; font-size: 14px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: '+'; font-family: var(--mono); font-size: 18px; color: var(--ink-mute); }
+  details[open] summary::after { content: '−'; }
+  details .det-body { padding: 0 16px 14px; font-size: 13.5px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- ============ SIDEBAR ============ -->
+<aside class="sidebar">
+  <div class="sb-brand">SENTINEL</div>
+  <div class="sb-title">通用主题舆情雷达</div>
+  <div class="sb-version">v2.0.0 · 2026-05-15</div>
+
+  <a href="../总览.md" class="sb-back">← 项目入口</a>
+
+  <ul class="sb-nav">
+    <div class="sb-section-label">入门</div>
+    <li><a href="#overview">系统是什么</a></li>
+    <li><a href="#diagram">系统调用图</a></li>
+    <li><a href="#quickstart">3 分钟跑通</a></li>
+    <li><a href="#services">4 个 service</a></li>
+    <li><a href="#entrypoints">3 个入口</a></li>
+    <li><a href="#skill-list">Skill 一览</a></li>
+
+    <div class="sb-section-label">使用</div>
+    <li><a href="#scenarios">完整使用示范</a></li>
+    <li><a href="#webui">Web UI 操作</a></li>
+    <li><a href="#cli">CLI 命令参考</a></li>
+    <li><a href="#skill">Skill 触发词</a></li>
+    <li><a href="#kb-structure">KB 结构</a></li>
+
+    <div class="sb-section-label">部署 / 数据</div>
+    <li><a href="#deploy">launchd 部署</a></li>
+    <li><a href="#migrate">v1 数据迁移</a></li>
+    <li><a href="#backup">备份与故障</a></li>
+
+    <div class="sb-section-label">架构</div>
+    <li><a href="#design-principles">4 条架构原则</a></li>
+    <li><a href="#collector-extend">加新 collector</a></li>
+
+    <div class="sb-section-label">系统级</div>
+    <li><a href="#faq">系统级 FAQ</a></li>
+    <li><a href="#versions">版本演进</a></li>
+  </ul>
+
+  <div class="sb-footer">
+    设计 SSoT<br>
+    00-系统设计/设计.md<br><br>
+    代码<br>
+    ~/sentinel-v2/<br><br>
+    137 / 137 tests
+  </div>
+</aside>
+
+<!-- ============ MAIN ============ -->
+<main class="main">
+
+<section id="overview">
+  <div class="hero-meta">
+    <span class="badge primary">SYSTEM</span>
+    <span class="badge">v2.0.0</span>
+    <span class="badge ok">实施完成 2026-05-15</span>
+  </div>
+  <h1>Sentinel v2</h1>
+  <p class="lead">通用主题舆情雷达 · 不锁特定行业 · 4 个独立 service · 3 端入口 · Mac launchd 自动化</p>
+
+  <p>Sentinel v2 是对 v1（VPN 行业舆情雷达）的<strong>原理性重构</strong>。借鉴 aihot 项目的 4 条架构原则（详见 <a href="#design-principles">下文</a>），让代码每一层都各司其职、按主题组织信源、Web UI 取代旧 5 skill 主操作面。</p>
+
+  <p>v1 已完整归档至 <code>v1 sentinel 项目（如果有的话）/</code> 和 KB <code>_archive/v1/</code>，不再触发。</p>
+
+  <h3>核心特点</h3>
+  <ul>
+    <li><strong>跨行业可扩展</strong>：topic 上 industry 字段是分组标签（VPN / 教育 / 电商 …），不锁特定业务</li>
+    <li><strong>4 个独立 service</strong>：collect / alert / analyze ★ / advisor，互不阻塞、按 topic 独立开关</li>
+    <li><strong>3 个入口</strong>：Web UI（推荐）/ CLI / Skill 对话，调同一套底层</li>
+    <li><strong>主题主导信源</strong>：用户加信源时面对的是 topic，不是 collector kind</li>
+    <li><strong>Topic 级告警开关</strong>：<code>topic.alert_enabled</code> 字段，按主题独立控制</li>
+    <li><strong>反向校验 8 字段</strong>：深度报告每议题含 ❓反例 / 🧪证伪 / ⚠️误判 / 🔗多源</li>
+  </ul>
+</section>
+
+<!-- ============ DIAGRAM (必有：系统调用图) ============ -->
+<section id="diagram">
+  <h2>系统调用图</h2>
+  <p>v2 整体架构（含数据流 / 控制流 / 工具区 · 详见架构图原图）：</p>
+  <img class="arch-img" src="architecture.svg" alt="Sentinel v2 架构图">
+  <p>下方"完整使用示范" 5 个场景演示了主要数据/控制流走向。</p>
+</section>
+
+<!-- ============ QUICKSTART ============ -->
+<section id="quickstart">
+  <h2>3 分钟跑通</h2>
+
+  <h3>1. 装依赖</h3>
+  <pre><code>cd ~/sentinel-v2
+.venv/bin/pip install -e ".[dev]"</code></pre>
+
+  <h3>2. 配密钥</h3>
+  <pre><code>cp secrets/.env.example secrets/.env
+chmod 600 secrets/.env
+# 编辑填入：TELEGRAM_API_ID/HASH/BOT_TOKEN/CHAT_ID
+# 如有 SOCIALDATA_API_KEY 也填</code></pre>
+
+  <h3>3. 开 Web UI</h3>
+  <pre><code>.venv/bin/python -m sentinel web</code></pre>
+  <p>浏览器打开 <code>http://localhost:8080</code>。在 <code>/sources</code> 加信源、<code>/topics</code> 加主题。</p>
+
+  <h3>4. 立即手动跑一次 collect / alert</h3>
+  <pre><code>.venv/bin/python -m sentinel collect run --force
+.venv/bin/python -m sentinel alert run --force [--dry-run-push]</code></pre>
+
+  <h3>5. 跑深度报告（人工触发）</h3>
+  <pre><code>.venv/bin/python -m sentinel analyze report --topic "X" --period 7d</code></pre>
+
+  <h3>6. launchd 自动化（让 v2 真接管 6h 周期）</h3>
+  <pre><code>.venv/bin/python -m sentinel deploy install     # 渲染 6 plist + launchctl load
+.venv/bin/python -m sentinel deploy status      # 看部署状态
+.venv/bin/python -m sentinel deploy uninstall   # 解除</code></pre>
+</section>
+
+<!-- ============ 4 SERVICES ============ -->
+<section id="services">
+  <h2>4 个 service</h2>
+  <p>四个独立可单跑、互不阻塞、按 topic 独立开关：</p>
+
+  <div class="svc-grid">
+    <div class="svc-card">
+      <div class="svc-name">collect</div>
+      <div class="svc-trigger">launchd 02/08/14/20</div>
+      <div class="svc-desc">遍历 enabled sources · 调 collector 拉数据 · 写 messages 入 SQLite · <strong>不调 LLM</strong></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name">alert</div>
+      <div class="svc-trigger">launchd 02:30/08:30/...</div>
+      <div class="svc-desc">从 SQLite 读新 messages → Haiku triage 三关 gate → Telegram push + KB 02-告警归档/</div>
+    </div>
+    <div class="svc-card star">
+      <div class="svc-name">★ analyze</div>
+      <div class="svc-trigger">人工触发 / 周日 22:00</div>
+      <div class="svc-desc">从 SQLite 读 → Opus 4.7 出深度报告 · 每议题 <strong>8 子标题含 4 反向校验</strong></div>
+    </div>
+    <div class="svc-card">
+      <div class="svc-name">advisor</div>
+      <div class="svc-trigger">人工触发</div>
+      <div class="svc-desc">读 messages + alerts + user_label · Haiku 出"加权/关闭/关键词"建议 · 覆盖式更新 03-主题/[topic]/信源.md</div>
+    </div>
+  </div>
+
+  <h3>关键设计</h3>
+  <ul>
+    <li><strong>独立 entry</strong>：每个 service 一个 launchd plist（collect/alert/weekly/backup/watchdog 触发型 5 个 + web 长驻 1 个 = 6 个）</li>
+    <li><strong>独立 pause</strong>：<code>.pause-collect</code> / <code>.pause-alert</code> 文件，互不影响</li>
+    <li><strong>共享 runtime.shell</strong>：pause 检查 / 阈值守门 / caffeinate / run 记录 / 致命错 push / retention 全在外壳里，业务核心不写</li>
+    <li><strong>共享存储</strong>：SQLite + KB markdown 文件系统</li>
+  </ul>
+</section>
+
+<!-- ============ ENTRYPOINTS ============ -->
+<section id="entrypoints">
+  <h2>3 个入口</h2>
+  <p>所有操作都能在 Web / CLI / Skill 三端完成，底层调同一套 service Python lib。</p>
+
+  <table>
+    <thead><tr><th>入口</th><th>何时用</th><th>典型场景</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><strong>Web UI</strong> 推荐</td>
+      <td>浏览历史 / 加信源 / 看运维状态 / 标记告警</td>
+      <td><code>python -m sentinel web</code> → <a href="http://localhost:8080">localhost:8080</a></td>
+    </tr>
+    <tr>
+      <td><strong>CLI</strong></td>
+      <td>脚本化 · 一次性命令 · launchd 内</td>
+      <td><code>python -m sentinel {collect,alert,analyze,advisor,deploy,migrate-v1,web,status}</code></td>
+    </tr>
+    <tr>
+      <td><strong>Skill</strong></td>
+      <td>Claude Code 对话里自然语言触发</td>
+      <td>"<code>/sentinel</code>" / "跑下 X 周报" / "出 X 信源建议"</td>
+    </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ SKILL LIST (必有：Skill 一览表) ============ -->
+<section id="skill-list">
+  <h2>Skill 一览</h2>
+  <p>v2 整套系统只有 <strong>1 个 skill</strong>（vs v1 的 5 个 skill）。aihot 原则 #1：SKILL.md 不堆业务逻辑，所以一个翻译层就够。</p>
+
+  <table>
+    <thead><tr><th>Skill</th><th>触发</th><th>做啥</th><th>Guide</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><code>sentinel</code></td>
+      <td><code>/sentinel</code> · "舆情" · "跑下 X 周报" · "出 X 信源建议" · "sentinel 状态" 等</td>
+      <td>把用户自然语言意图翻译成 <code>~/sentinel-v2/</code> 的 CLI 命令；首选引导用户走 Web UI 做写入操作；不主动跑 LLM 类命令（除非用户明确"现在跑"）</td>
+      <td><a href="#skill">本页 §Skill 触发词 ↓</a></td>
+    </tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <strong>关键设计差异 vs v1</strong>：v1 有 5 个 skill（router + config/analyze/status/daemon-ctl），v2 把所有"做事"动作搬到 Web UI 和 CLI，skill 只剩翻译层。
+    所以 v2 没有"router 路由到 4 个 spoke"的调用图。日常写入 / 配置 / 运维操作直接用 Web UI 更高效。
+  </div>
+</section>
+
+<!-- ============ SCENARIOS (必有：完整使用示范 · sentinel 是决策树系统用 Scenario library 形态) ============ -->
+<section id="scenarios">
+  <h2>完整使用示范</h2>
+  <p>5 个独立场景片段（sentinel 是决策树系统，非端到端 chain，用 Scenario library 形态）：</p>
+
+  <div class="scenarios">
+
+    <!-- 场景 1: 新加主题 -->
+    <div class="scenario">
+      <div class="scenario-head">
+        <div class="scenario-when">场景 1 · 新加主题"教育-双减"开始监控</div>
+        <div class="scenario-skill">Web UI</div>
+      </div>
+      <div class="scenario-chat">
+        <div class="scenario-row sys"><div class="who">START</div><div class="body">浏览器 <code>http://localhost:8080/topics</code></div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">填表 → name=双减 · industry=教育 · monitor_direction="K12 招生/教培政策" · alert_enabled=✓ → 添加</div></div>
+        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">topic #2 已加，跳到 <code>/topics</code> 列表（按 industry 分组显示）</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">点 "双减" 进详情页 → 加 keywords: "双减" "招生" "学区"</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">"关联信源" 下拉选已有 telegram 频道或先去 /sources 加 RSS 后再回来关联</div></div>
+        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">topic ↔ source 关联建立。下次 collect 跑时该 topic 就开始收数据。</div></div>
+      </div>
+    </div>
+
+    <!-- 场景 2: 跑深度周报 -->
+    <div class="scenario">
+      <div class="scenario-head">
+        <div class="scenario-when">场景 2 · 跑一次深度报告</div>
+        <div class="scenario-skill">Skill / CLI</div>
+      </div>
+      <div class="scenario-chat">
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">"跑下 VPN 行业动态 过去 7 天深度报告"</div></div>
+        <div class="scenario-row claude"><div class="who">CL</div><div class="body">"建议跑：<br><code>cd ~/sentinel-v2 && .venv/bin/python -m sentinel analyze report --topic 'VPN 行业动态' --period 7d</code><br>这会调 Opus 4.7（~30s ~ 2min），输出到 <code>01-报告/主题深度报告/</code>。要现在执行吗？"</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">"现在跑"</div></div>
+        <div class="scenario-row claude"><div class="who">CL</div><div class="body">执行后输出："headline: GFW 协议封锁强化 · 多家机场 Trojan 端口被识别 / messages=2248 / 4 议题（1 high + 2 medium + 1 low）/ file: 01-报告/主题深度报告/2026-05-18-VPN行业-协议封锁强化.md"</div></div>
+      </div>
+    </div>
+
+    <!-- 场景 3: 标记告警 -->
+    <div class="scenario">
+      <div class="scenario-head">
+        <div class="scenario-when">场景 3 · 看告警 + 反馈准/误报</div>
+        <div class="scenario-skill">Web UI</div>
+      </div>
+      <div class="scenario-chat">
+        <div class="scenario-row sys"><div class="who">START</div><div class="body">Telegram 收到 push："🚨 多家机场 Trojan 协议被封"</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">浏览器开 <code>/alerts</code> → 看完整 summary + 证据频道</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">这条告警是真的，点 "标记" → "⭐ 准"</div></div>
+        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">alert.user_label = 'true_positive'。下次 advisor scan 这条会被纳入 30 天反馈窗口算信噪比</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">另一条 "@xxx 频道用户吐槽我电脑慢" → 误报，标 "🚫 误报"</div></div>
+        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">advisor 后续会发现该频道误报多 → 建议降权 / 关闭</div></div>
+      </div>
+    </div>
+
+    <!-- 场景 4: advisor 信源运营建议 -->
+    <div class="scenario">
+      <div class="scenario-head">
+        <div class="scenario-when">场景 4 · 跑 advisor 看信源运营建议</div>
+        <div class="scenario-skill">Skill / CLI · 推荐每 2-4 周跑一次</div>
+      </div>
+      <div class="scenario-chat">
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">"出个 VPN 行业动态 信源建议"</div></div>
+        <div class="scenario-row claude"><div class="who">CL</div><div class="body">"建议跑：<br><code>python -m sentinel advisor scan --topic 'VPN 行业动态'</code><br>这会调 Haiku，看 30 天反馈窗口数据 + 信噪比 + user_label。OK 跑吗？"</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">"跑"</div></div>
+        <div class="scenario-row sys"><div class="who">SYS</div><div class="body">写到 <code>03-主题/VPN-行业动态/信源.md</code> 的 <code>## advisor 建议</code> section：<br>"- 建议关闭 @noise_channel · 信噪比 0.003<br>- 建议加权 @example_channel · 信噪比 0.32 持续高质量<br>- 推荐关键词：增加 'XHTTP', 'AnyTLS'"</div></div>
+      </div>
+    </div>
+
+    <!-- 场景 5: 部署 + 运维 -->
+    <div class="scenario">
+      <div class="scenario-head">
+        <div class="scenario-when">场景 5 · 让 v2 自动跑 + 暂停某 service</div>
+        <div class="scenario-skill">CLI / Web UI</div>
+      </div>
+      <div class="scenario-chat">
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">想让 v2 真的自动每 6h 跑（不用我手动 collect run）</div></div>
+        <div class="scenario-row sys"><div class="who">CMD</div><div class="body"><code>python -m sentinel deploy install</code> → 写 .host + launchctl load 6 plist（含 web 长驻）</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">出差 3 天，不想收 telegram push 但仍想采集数据</div></div>
+        <div class="scenario-row sys"><div class="who">CMD</div><div class="body">Web UI <code>/status</code> 点 "alert" 行 "暂停" + 填 days=3 → <code>.pause-alert</code> 文件写入 expire_at<br>3 天后自动恢复，collect 期间仍跑（数据采集不停）</div></div>
+        <div class="scenario-row you"><div class="who">YOU</div><div class="body">某天突然没收到告警，去 <code>/status</code> 看历史 run → 看到 collect 上次 failed</div></div>
+        <div class="scenario-row sys"><div class="who">CMD</div><div class="body">点详情看 error 列 → "tail -100 ~/sentinel-v2/logs/collect.err.log"</div></div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ============ WEB UI ============ -->
+<section id="webui">
+  <h2>Web UI 操作</h2>
+  <p>启动：<code>python -m sentinel web</code> · 默认 localhost:8080 · Ctrl+C 退出。</p>
+
+  <h3>页面导航</h3>
+  <table>
+    <thead><tr><th>页面</th><th>能做什么</th></tr></thead>
+    <tbody>
+    <tr><td><code>/</code></td><td>Dashboard 综合：4 service 状态 · stat 计数 · 最近 5 告警/报告</td></tr>
+    <tr><td><code>/alerts</code></td><td>告警列表 · 标记 ⭐ 准 / 🚫 误报</td></tr>
+    <tr><td><code>/reports</code></td><td>报告列表 · 在线 markdown 渲染查看</td></tr>
+    <tr><td><code>/topics</code></td><td>主题列表（按 industry 分组） + 加新主题</td></tr>
+    <tr><td><code>/topics/{id}</code></td><td>主题详情 · 关联信源 · 关键词 · <strong>手动触发 analyze / advisor</strong></td></tr>
+    <tr><td><code>/sources</code></td><td>信源列表（按 kind 分组） + 加新信源 + toggle/删</td></tr>
+    <tr><td><code>/status</code></td><td>service_runs 历史 + pause/resume + 立即跑</td></tr>
+    </tbody>
+  </table>
+
+  <h3>典型工作流</h3>
+  <details><summary>新加主题：从零开始监控某个话题</summary>
+    <div class="det-body">
+      <ol>
+        <li>开 <code>/topics</code></li>
+        <li>填表："name=my-product / industry=VPN / monitor_direction=my-product 自身可用性 + 主要竞品 / alert_enabled=✓"</li>
+        <li>点 topic 进详情页 <code>/topics/{id}</code></li>
+        <li>关联信源（从已有 source 下拉选）</li>
+        <li>加关键词（chip 形式，逐个加）</li>
+        <li>点 <strong>"出深度报告"</strong> 立即跑一次 analyze 验证</li>
+      </ol>
+    </div>
+  </details>
+
+  <details><summary>加新信源</summary>
+    <div class="det-body">
+      <ol>
+        <li>开 <code>/sources</code></li>
+        <li>选 kind（rss / telegram / twitter / reddit / social）</li>
+        <li>填 identifier（URL / @channel / username）</li>
+        <li>默认会调 <code>collector.resolve()</code> 验证（telegram 需 .env 配 TG API ID/HASH）</li>
+        <li>如果是 social：identifier 填 <code>v2ex</code> 或 <code>v2ex/搜索词</code></li>
+      </ol>
+    </div>
+  </details>
+
+  <details><summary>标记 alert 准 / 误报</summary>
+    <div class="det-body">
+      <p><code>/alerts</code> 页每条 alert 旁有"标记"按钮，点开后选 ⭐ 准 / 🚫 误报 / 清。</p>
+      <p>反馈数据会进 advisor 的"反馈窗口"参与建议生成（30 天滚动）。</p>
+    </div>
+  </details>
+</section>
+
+<!-- ============ CLI ============ -->
+<section id="cli">
+  <h2>CLI 命令参考</h2>
+  <p>所有命令默认 <code>cd ~/sentinel-v2 && .venv/bin/python -m sentinel ...</code></p>
+
+  <h3>service 操作</h3>
+  <pre><code># 跑一次
+sentinel collect run [--force]
+sentinel alert run [--force] [--dry-run-push]
+sentinel analyze report --topic "X" --period 7d [--mode auto|single|timeseries]
+sentinel analyze weekly                          # 所有 alert_enabled topic 跑 7d 周报
+sentinel advisor scan --topic "X" [--window-days 30]
+
+# 暂停/恢复
+sentinel collect pause [--days N]  # N 天后自动恢复；不填永久
+sentinel collect resume
+sentinel alert pause / resume
+
+# 状态查询
+sentinel status [--service collect|alert|analyze|advisor]</code></pre>
+
+  <h3>部署</h3>
+  <pre><code>sentinel deploy install      # 渲染 6 plist + launchctl load + 写 .host
+sentinel deploy status       # 看部署状态 + host check
+sentinel deploy uninstall    # unload + 移除 plist</code></pre>
+
+  <h3>数据迁移</h3>
+  <pre><code>sentinel migrate-v1            # dry-run · 看会从 v1 sentinel 项目 导入什么
+sentinel migrate-v1 --apply    # 实际写入
+sentinel migrate-v1 --v1-db <path>   # 指定其他 v1 db</code></pre>
+
+  <h3>Web UI</h3>
+  <pre><code>sentinel web [--host 127.0.0.1] [--port 8080] [--reload]</code></pre>
+
+  <h3>--period 时间窗格式</h3>
+  <ul>
+    <li><code>24h</code> · 24 小时</li>
+    <li><code>168h</code> 或 <code>7d</code> · 7 天</li>
+    <li><code>720h</code> 或 <code>30d</code> · 30 天</li>
+  </ul>
+</section>
+
+<!-- ============ SKILL ============ -->
+<section id="skill">
+  <h2>Skill 触发词（Claude 对话入口）</h2>
+  <p>v2 1 个 skill（<code>~/.claude/skills/sentinel/SKILL.md</code>），<strong>只翻译意图调 CLI，不堆业务逻辑</strong>（aihot 原则 #1）。</p>
+
+  <table>
+    <thead><tr><th>你对 Claude 说</th><th>Skill 给出的 CLI</th></tr></thead>
+    <tbody>
+    <tr><td>"sentinel 状态" / "<code>/sentinel</code> status"</td><td><code>sentinel status</code></td></tr>
+    <tr><td>"跑下 X 7 天周报"</td><td><code>sentinel analyze report --topic "X" --period 7d</code></td></tr>
+    <tr><td>"出个 X 信源建议" / "<code>/sentinel</code> advisor X"</td><td><code>sentinel advisor scan --topic "X"</code></td></tr>
+    <tr><td>"现在跑一次 collect"</td><td><code>sentinel collect run --force</code></td></tr>
+    <tr><td>"暂停 collect"</td><td><code>sentinel collect pause</code></td></tr>
+    <tr><td>"开 web UI"</td><td><code>sentinel web</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <strong>设计纪律</strong>：Skill 不主动跑会花钱的命令（<code>analyze</code> / <code>advisor</code> 都调 LLM）。除非你明确说"现在跑"，否则只把命令显示出来让你自己跑。
+  </div>
+
+  <h3>不该走 Skill 的场景</h3>
+  <ul>
+    <li><strong>加信源 / 加主题</strong>：让 Skill 引导你走 Web UI（有表单校验 + 即时反馈）</li>
+    <li><strong>复杂数据查询</strong>："哪些 source 信噪比最低"之类的去 Web UI <code>/sources</code> / <code>/status</code></li>
+    <li><strong>改 service 行为</strong>：改的是 <code>~/sentinel-v2/sentinel/services/&lt;svc&gt;.py</code>，不是 SKILL.md</li>
+  </ul>
+
+  <h3>Skill 入口调试</h3>
+  <ul>
+    <li><strong>触发不上</strong>：说话太抽象（"看下数据"/"舆情很乱"）→ skill 不激活。改用明确触发词，或在对话开头加 <code>/sentinel</code> 强制激活</li>
+    <li><strong>触发上了但翻译错</strong>：看 <code>~/.claude/skills/sentinel/SKILL.md</code> 触发词 → CLI 映射表；缺映射直接编辑加（aihot 原则 #1：SKILL.md 只翻译，不写业务）</li>
+    <li><strong>升级</strong>：v2 是私有项目，没 npx 包。升级 = 改 <code>~/.claude/skills/sentinel/SKILL.md</code>（编辑后下次对话生效）</li>
+    <li><strong>卸载</strong>：<code>mv ~/.claude/skills/sentinel ~/.claude/skills/_archive/sentinel-v2-removed/</code>。卸载后 Web UI / CLI 仍可用，只失去 Claude 对话入口</li>
+    <li><strong>路径硬编码</strong>：SKILL.md 默认 <code>~/sentinel-v2/</code>。改项目位置时同步搜替换 + 改 <code>sentinel/config.py</code> 的 <code>PROJECT_ROOT</code></li>
+  </ul>
+</section>
+
+<!-- ============ KB ============ -->
+<section id="kb-structure">
+  <h2>KB 结构</h2>
+
+<pre><code><KB_ROOT>/
+├── 总览.md                                       # 项目入口
+├── 运行状态.md                                    # service 自动维护
+├── 00-系统设计/
+│   ├── 设计.md                                   # v2 SSoT（改逻辑前必读）
+│   └── Sentinel 架构图.svg                        # v2 架构图（SVG · 用 fireworks-tech-graph skill 重画）
+├── 01-报告/                                       # analyze 产出
+│   ├── 周报/YYYY-W##-{topic}-周报.md
+│   └── 主题深度报告/YYYY-MM-DD-{headline}.md
+├── 02-告警归档/YYYY-W##-告警合集.md                 # alert 产出（按周聚合）
+├── 03-主题/[topic]/信源.md                        # ★ v2 新增维度
+│                                                  # 含信源清单 + advisor 建议 section
+├── 使用说明/                                      # 本文档所在
+│   └── sentinel-v2-guide.html
+└── _archive/v1/                                  # v1 全套归档</code></pre>
+
+  <h3>关键约定</h3>
+  <ul>
+    <li><strong>03-主题/[topic]/信源.md</strong>：每个 topic 的 SSoT，含元信息 / 信源清单 / advisor 建议 section。advisor 覆盖式更新自己的段，其他段保留</li>
+    <li><strong>02-告警归档</strong>：按周聚合，daemon 自动写</li>
+    <li><strong>01-报告</strong>：周报和主题深度分目录</li>
+  </ul>
+</section>
+
+<!-- ============ DEPLOY ============ -->
+<section id="deploy">
+  <h2>launchd 部署</h2>
+  <p>6 个 launchd plist 接管 v2 自动化（触发型 5 + 长驻 1）：</p>
+
+  <table>
+    <thead><tr><th>plist label</th><th>触发时段</th><th>跑什么</th></tr></thead>
+    <tbody>
+    <tr><td><code>local.sentinel.collect</code></td><td>02 / 08 / 14 / 20</td><td><code>sentinel collect run</code></td></tr>
+    <tr><td><code>local.sentinel.alert</code></td><td>02:30 / 08:30 / 14:30 / 20:30</td><td><code>sentinel alert run</code></td></tr>
+    <tr><td><code>local.sentinel.weekly</code></td><td>周日 22:00</td><td><code>sentinel analyze weekly</code>（按 weekly_enabled）</td></tr>
+    <tr><td><code>local.sentinel.backup</code></td><td>每天 23:30</td><td>SQLite gzip → KB _archive/backups/ + 顺带 rotate-logs</td></tr>
+    <tr><td><code>local.sentinel.watchdog</code></td><td>每天 09:00</td><td>collect/alert/backup/weekly 4 项 + 周一月初 heartbeat</td></tr>
+    <tr><td><code>local.sentinel.web</code></td><td>长驻（开机自启）</td><td><code>sentinel web --port 8080</code>，崩溃 10s 自愈</td></tr>
+    </tbody>
+  </table>
+
+  <h3>install / uninstall</h3>
+  <pre><code>sentinel deploy install
+# → 渲染 6 个 plist 模板（替换 PYTHON_PATH / SENTINEL_HOME / HOME）
+# → 复制到 ~/Library/LaunchAgents/
+# → launchctl load 每个 plist
+# → 写 .host 文件到 KB 00-系统设计/
+
+launchctl list | grep sentinel    # 验证 6 个 service 已 load</code></pre>
+
+  <h3>多机感知（host check）</h3>
+  <div class="callout info">
+    <strong>.host 文件机制</strong>：deploy install 时把本机 <code>scutil --get LocalHostName</code> 写到 <code>~/.kb/.../00-系统设计/.host</code>。
+    副机执行 service 时 runtime.shell 检测本机 hostname ≠ .host 内容 → 友好退出，<strong>不污染主机 service_runs</strong>。
+  </div>
+
+  <h3>调度时段错开</h3>
+  <p>alert 比 collect 滞后 30 分钟，确保 collect 完成后 alert 才判定。collect 用 <code>StartCalendarInterval</code> 4 时段（02/08/14/20）而非 <code>StartInterval</code>，因为 macOS 睡眠期间 StartInterval 不补跑。</p>
+</section>
+
+<!-- ============ MIGRATE ============ -->
+<section id="migrate">
+  <h2>v1 数据迁移</h2>
+  <p>从 <code>v1 sentinel 项目（如果有的话）/db/messages.db</code> 把 v1 的 sources / topics / topic_keywords / topic_sources 导入 v2。</p>
+
+  <p><strong>不迁移</strong>：messages / alerts / daemon_runs（fresh start 数据）。</p>
+
+  <h3>用法</h3>
+  <pre><code>sentinel migrate-v1                  # dry-run（默认）· 看会做什么
+sentinel migrate-v1 --apply          # 实际写入
+sentinel migrate-v1 --v1-db <path>   # 指定其他 v1 db</code></pre>
+
+  <h3>转换规则</h3>
+  <ul>
+    <li><strong>industry</strong>：v1 没该字段 → v2 默认 <code>'VPN'</code></li>
+    <li><strong>alert_enabled</strong>：v1 没该字段 → v2 默认 <code>1</code>（启用告警）</li>
+    <li><strong>failure_count</strong>：v1 没 → v2 从 0 开始</li>
+    <li><strong>UNIQUE 冲突</strong>：(kind, identifier) 重复的 source、name 重复的 topic 跳过</li>
+    <li><strong>未知 kind</strong>：跳过 + 报告里告警</li>
+  </ul>
+
+  <div class="callout warn">
+    迁移完不会自动启 daemon。你需要单独 <code>sentinel deploy install</code> 才让 launchd 接管。
+  </div>
+</section>
+
+<!-- ============ BACKUP ============ -->
+<section id="backup">
+  <h2>备份与故障</h2>
+
+  <h3>SQLite 备份</h3>
+  <p><code>scripts/backup.sh</code> 每天 23:30 自动跑（launchd backup plist），把 <code>db/messages.db</code> 用 <code>sqlite3 .backup</code> + gzip 保存到 KB：</p>
+<pre><code>~/.kb/.../Sentinel/_archive/backups/messages-YYYY-MM-DD.db.gz</code></pre>
+  <p>保留 14 天滚动。</p>
+
+  <h3>Watchdog 监控</h3>
+  <p>每天 09:00 跑 <code>scripts/watchdog.sh</code>：检查 collect 上次成功距今多少小时，&gt;36h 即 Telegram push 警告。</p>
+
+  <h3>常见故障</h3>
+  <details><summary>collect 一直 skipped — gap &lt; threshold</summary>
+    <div class="det-body">
+      <p>正常行为：12h 阈值守门。立即跑用 <code>--force</code> 跳过阈值（仍尊重 pause）。</p>
+    </div>
+  </details>
+
+  <details><summary>alert push 全 failed</summary>
+    <div class="det-body">
+      <p>看 <code>~/sentinel-v2/logs/alert.err.log</code>。常见原因：</p>
+      <ul>
+        <li>secrets/.env 没填 TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID</li>
+        <li>TG bot token 过期</li>
+        <li>chat_id 错误（必须是 bot 能 push 到的 chat）</li>
+      </ul>
+    </div>
+  </details>
+
+  <details><summary>analyze cluster timeout / 退到 single</summary>
+    <div class="det-body">
+      <p>>2k 消息聚类可能超时（claude CLI <code>cli_timeout</code> 默认 600s）。fallback 到 single mode 仍保 8 字段（v2 改进）。如果常超时可：</p>
+      <ul>
+        <li>config.yaml 加大 <code>llm.cli_timeout</code></li>
+        <li>用更小 period（如 <code>--period 24h</code>）</li>
+      </ul>
+    </div>
+  </details>
+
+  <details><summary>副机调用 service 报 host mismatch</summary>
+    <div class="det-body">
+      <p>预期行为。host check 保护多机一致性。要切换部署主机：</p>
+      <ol>
+        <li>新主机：<code>sentinel deploy install</code>（覆盖 .host）</li>
+        <li>旧主机：<code>sentinel deploy uninstall</code></li>
+      </ol>
+    </div>
+  </details>
+
+  <details><summary>service_runs 全 failed · 看具体日志</summary>
+    <div class="det-body">
+<pre><code>tail -100 ~/sentinel-v2/logs/collect.err.log
+tail -100 ~/sentinel-v2/logs/alert.err.log
+tail -100 ~/sentinel-v2/logs/weekly.err.log
+
+# 或 web UI 看 /status</code></pre>
+    </div>
+  </details>
+</section>
+
+<!-- ============ PRINCIPLES ============ -->
+<section id="design-principles">
+  <h2>4 条架构原则</h2>
+  <p>v2 重构借鉴的核心原则（来源：aihot 项目对比分析）：</p>
+
+  <div class="principles">
+    <div class="principle">
+      <div class="pn-name">#1 SKILL.md 不堆逻辑</div>
+      <div class="pn-desc">SKILL.md 只翻译意图 → 调 CLI/lib → 格式化输出，<strong>不写工作流逻辑</strong>。v2 sentinel skill 71 行就够，所有业务在 ~/sentinel-v2/sentinel/</div>
+    </div>
+    <div class="principle">
+      <div class="pn-name">#2 数据面 / 呈现面强分层</div>
+      <div class="pn-desc">analyze.data 拉数据调 LLM 返回结构化 dict；analyze.render 组装 markdown 写 KB。两层独立可测，不混</div>
+    </div>
+    <div class="principle">
+      <div class="pn-name">#3 边界关注点放在边界</div>
+      <div class="pn-desc">pause / 阈值 / retry / caffeinate / retention 全收到 runtime.shell context manager。<strong>业务核心代码只关心业务</strong></div>
+    </div>
+    <div class="principle">
+      <div class="pn-name">#4 pull-on-demand vs daemon 分清</div>
+      <div class="pn-desc">collect / alert 是 daemon；analyze / advisor 是 pull。social 平台抓取放 collector 内部 fetcher，不依赖 LLM session</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SYSTEM FAQ (必有) ============ -->
+<section id="faq">
+  <h2>系统级 FAQ</h2>
+  <p>跨 service / 系统层面的问题（单 skill FAQ 答不了的）：</p>
+
+  <details>
+    <summary>v1 5 个 skill 都去哪了？为啥 v2 只有 1 个？</summary>
+    <div class="det-body">v2 是 service 化重构。v1 的 router/config/analyze/status/daemon-ctl 5 skill 主要做"路由 + UI"，v2 直接用 Web UI（含完整后台 + 运维）取代了 4 个 spoke 的 skill。sentinel 1 skill 只做"AI 翻译意图为 CLI"（aihot 原则 #1）。日常加 source / 标记 alert / 跑深度报告这些写入操作走 Web UI 比 skill 高效得多。</div>
+  </details>
+
+  <details>
+    <summary>4 service 不会互相阻塞吗？</summary>
+    <div class="det-body">不会。4 个独立 launchd plist，调度时段错开（collect 整点，alert 30 分），共享只是 SQLite + KB 文件系统。collect 失败不影响 alert（alert 看上次的 messages 即可），任一 service 单独 pause/resume 也不影响其他。</div>
+  </details>
+
+  <details>
+    <summary>跨行业怎么用？industry 字段干嘛的？</summary>
+    <div class="det-body">每个 topic 加一个 industry 字段（"VPN" / "教育" / "电商" / …）。industry 是<strong>轻量分组标签</strong>，没单独实体表（用 SELECT DISTINCT 派生）。Web UI <code>/topics</code> 按 industry 分组显示。同时 advisor / alert / analyze 的 LLM prompt 把 industry 当上下文写入，让 LLM 不锁特定行业。</div>
+  </details>
+
+  <details>
+    <summary>从主机切到另一台 Mac 部署怎么搞？</summary>
+    <div class="det-body">
+      <ol>
+        <li>旧主机：<code>sentinel deploy uninstall</code></li>
+        <li>新主机：<code>git clone</code>（如已 push）或拷 <code>~/sentinel-v2/</code> 整个目录</li>
+        <li>新主机：配 <code>secrets/.env</code> + <code>config.yaml</code></li>
+        <li>新主机：<code>sentinel deploy install</code> → 覆盖 <code>.host</code> 标识新主机</li>
+        <li>从旧 DB 迁数据：<code>sentinel migrate-v1 --v1-db <旧主机 db 路径> --apply</code></li>
+      </ol>
+    </div>
+  </details>
+
+  <details>
+    <summary>v1 数据归档后还能回去查吗？</summary>
+    <div class="det-body">可以。v1 代码 + DB 在 <code>v1 sentinel 项目（如果有的话）/</code>（已 <code>.pause</code> 永久暂停）；v1 报告 / 告警归档 / 设计文档全在 <code>02-Work/1-Pixl/Projects/Sentinel/_archive/v1/</code>。SQLite 用 <code>sqlite3 v1 sentinel 项目（如果有的话）/db/messages.db</code> 直接查。</div>
+  </details>
+
+  <details>
+    <summary>Telegram session 怎么共享 / 迁移？</summary>
+    <div class="det-body">从 <code>v1 sentinel 项目（如果有的话）/secrets/*.session</code> 拷到 <code>~/sentinel-v2/secrets/</code>。telethon 会复用 session（不用重新登录）。注意 session 文件 chmod 600 + 不进 git。</div>
+  </details>
+
+  <details>
+    <summary>LLM 调用花钱吗？怎么控？</summary>
+    <div class="det-body">
+      默认 <code>llm.provider=cli</code> 调本地 claude CLI（复用 Claude Pro/Max 订阅，<strong>不烧 API quota</strong>）。如果改 <code>provider=api</code> 走 <code>ANTHROPIC_API_KEY</code> 才烧钱。
+      <ul>
+        <li>alert: Haiku triage，每 6h 跑一次，每月约 100-200 次（极便宜）</li>
+        <li>analyze: Opus 4.7 出深度报告，按 topic × period 计算（手动触发，可控）</li>
+        <li>advisor: Haiku，每 2-4 周跑一次</li>
+        <li>collect: <strong>不调 LLM</strong></li>
+      </ul>
+    </div>
+  </details>
+
+  <details>
+    <summary>web UI 监听 0.0.0.0 让局域网设备访问？</summary>
+    <div class="det-body"><code>python -m sentinel web --host 0.0.0.0</code>。但当前没鉴权，<strong>不建议公网暴露</strong>。如需远程访问推荐 Tailscale 等点对点 VPN。</div>
+  </details>
+
+  <details>
+    <summary>怎么看哪些 source 在浪费 LLM 配额？</summary>
+    <div class="det-body">跑 <code>sentinel advisor scan --topic X</code>。它会列每个 source 的"总消息 / 命中告警 / 信噪比 / 失败数"，明确说哪些建议关闭。建议每 2-4 周跑一次。</div>
+  </details>
+</section>
+
+<!-- ============ VERSIONS (必有) ============ -->
+<section id="versions">
+  <h2>版本演进</h2>
+
+  <ul class="versions">
+    <li>
+      <div class="v-name">v2.0.0 · 通用主题舆情雷达（原理性重构）</div>
+      <div class="v-date">2026-05-15</div>
+      <div class="v-body">
+        借鉴 aihot 项目 4 条架构原则重写。从 VPN 锁死 → 通用主题；从 1 个大 daemon → 4 个独立 service；从 5 个 skill → 1 个翻译层 skill + Web UI 全后台。
+        加 industry / alert_enabled / service 字段，扩 KB 03-主题/ 维度。launchd 6 plist 接管自动化。137 测试全过。
+      </div>
+    </li>
+    <li>
+      <div class="v-name">v1.2 · 反向校验 + social 链路（v1 最后一版）</div>
+      <div class="v-date">2026-05-14</div>
+      <div class="v-body">
+        analyze prompt 加 8 字段 4 反向校验（❓反例 / 🧪证伪 / ⚠️误判 / 🔗多源）。试图加 social 平台 collector（scan-social 派 web-access），但跨世界拼接复杂度高。该版触发了 v2 重构决策。
+      </div>
+    </li>
+    <li>
+      <div class="v-name">v1.1 · 数据驱动迭代</div>
+      <div class="v-date">2026-05-11</div>
+      <div class="v-body">
+        Topics 1→7，sources 47 enabled。caffeinate 防 Mac 睡眠冻结、StartCalendarInterval 补跑、user_label 反馈机制、议题聚类、4 launchd plist 全套。
+      </div>
+    </li>
+    <li>
+      <div class="v-name">v1.0 · MVP</div>
+      <div class="v-date">2026-05-10</div>
+      <div class="v-body">
+        launchd 短跑模型、6 SQLite 表、Telegram + Twitter + Reddit + RSS 4 collector、5 skill（router + 4 spoke）。VPN 行业舆情雷达。
+      </div>
+    </li>
+  </ul>
+</section>
+
+<!-- ============ COLLECTOR EXTEND ============ -->
+<section id="collector-extend">
+  <h2>加新 collector kind</h2>
+  <p>v2 collector 插件化：新增 kind <strong>不动 schema、不动 service 主循环</strong>。</p>
+
+  <h3>步骤</h3>
+  <ol>
+    <li>写 <code>sentinel/collectors/&lt;kind&gt;.py</code></li>
+    <li>实现 <code>BaseCollector</code> 子类（<code>KIND</code> / <code>async def collect()</code> / <code>@classmethod async def resolve()</code>）</li>
+    <li>用 <code>@register</code> 装饰</li>
+    <li><code>sentinel/collectors/__init__.py</code> 的 <code>auto_discover()</code> import 列表加一行</li>
+    <li>跑 <code>pytest tests/test_collectors_*</code> 加测试</li>
+  </ol>
+
+  <h3>需要反爬时</h3>
+  <p>用 <code>sentinel/fetchers/</code> 工具层：</p>
+  <ul>
+    <li><code>HttpxFetcher</code> · 直连（默认）</li>
+    <li><code>JinaFetcher</code> · <code>r.jina.ai</code> 转 markdown 省 token（反爬轻）</li>
+    <li><code>CdpFetcher</code> · playwright + 本地 Chrome CDP（反爬重，stub）</li>
+  </ul>
+
+<pre><code>from sentinel.fetchers import HttpxFetcher, JinaFetcher, fetch_with_chain
+
+async def collect(self, since):
+    r = await fetch_with_chain(url, [HttpxFetcher(), JinaFetcher()])
+    if not r.ok:
+        raise FetchFailed(r.error)
+    # parse r.body...</code></pre>
+
+  <h3>已实现 collector kind</h3>
+  <table>
+    <thead><tr><th>kind</th><th>实现</th><th>resolve 验证</th></tr></thead>
+    <tbody>
+    <tr><td>telegram</td><td>telethon</td><td>get_entity</td></tr>
+    <tr><td>rss</td><td>feedparser + HTML 剥离 + title 合并</td><td>feedparser 试解析</td></tr>
+    <tr><td>twitter</td><td>SocialData API</td><td>GET /twitter/user/{handle}</td></tr>
+    <tr><td>reddit</td><td>RSS 端点（reddit.com/r/X/.rss）</td><td>RSS resolve 委托</td></tr>
+    <tr><td>social</td><td>per-platform dispatch · V2EX 已实现 · zhihu/xiaohongshu/jike/bilibili stub</td><td>验证 platform 名</td></tr>
+    <tr><td>inbox</td><td>监视 KB <code>inbox/&lt;topic-slug&gt;/*.md</code>，ingest 后改名 <code>.md.ingested</code></td><td>验证 slug 存在</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============ 相关 skill ============ -->
+<section id="related-skills">
+  <h2>相关 skill</h2>
+  <ul>
+    <li><strong>my-product-research-*</strong> — my-product 用户研究系统 · 5 skill 链。<strong>信源 / 主题维度跟 sentinel 平行</strong>：sentinel 监控的是公开信源（TG/RSS/...），my-product-research 做的是 my-product 自家用户的画像研究。</li>
+    <li><strong>web-access</strong> — 通用反爬抓取 skill。sentinel collector 内部的 <code>fetchers/</code> 工具层<strong>借鉴</strong>了 web-access 的 site-pattern 沉淀（HttpxFetcher / JinaFetcher / CdpFetcher），但<strong>不依赖</strong> web-access skill 本身（aihot 原则 #4）。</li>
+    <li><strong>fireworks-tech-graph</strong> — 技术图生成 skill · 用来重画 <code>00-系统设计/Sentinel 架构图.svg</code> 的工具。</li>
+    <li><strong>neat-freak</strong> — KB 同步 skill · 改 v2 后整理 KB 文档（设计.md / 总览.md / hot.md / Skill 索引）时用。触发 <code>/neat</code>。</li>
+  </ul>
+  <p class="muted"><strong>分工口诀</strong>：sentinel 是"公开舆情雷达"，my-product-research 是"自家用户研究"，web-access 是"抓取工具箱"。互不重叠。</p>
+</section>
+
+</main>
+</div>
+</body>
+</html>

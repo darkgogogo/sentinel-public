@@ -1,0 +1,42 @@
+# Sentinel v2 主配置示例（拷贝为 config.yaml 后改）
+
+llm:
+  # provider: cli (默认 · 复用 Claude Pro/Max 订阅) / api (走 ANTHROPIC_API_KEY)
+  provider: cli
+  # cli_path 留空时启动自动 `which claude` 探测；多个安装时显式指定如:
+  # cli_path: /usr/local/bin/claude
+  cli_path: ""
+  cli_timeout: 600  # 秒 · 大消息量聚类需要更长时限
+
+models:
+  triage: claude-haiku-4-5         # alert service · daemon 内 triage 用
+  deep_analysis: claude-opus-4-7   # analyze service · 周报 / 主题深度
+  advisor: claude-haiku-4-5        # advisor service · 信源运营建议
+
+# 各 service 通用参数
+services:
+  collect:
+    threshold_hours: 5               # 距上次成功 < 此值则跳过（必须 < launchd 间隔 6h，否则触发被吃）
+    lookback_max_hours: 48           # 单次回溯封顶
+    retention_days: 90               # messages 保留天数
+    source_failure_limit: 5          # 连续失败 N 次自动 disable
+    service_runs_retention_days: 365 # service_runs 表保留窗口（alerts 永不清）
+
+  alert:
+    threshold_hours: 5               # 同 collect：< launchd 间隔 6h
+    triage_max_messages: 200         # 单 topic 喂 LLM 上限
+    dedupe_hours: 24                 # 同 headline 24h 内只 push 一次
+
+  analyze:
+    # 人工触发，无阈值
+    default_period_hours: 168        # 7 天默认
+
+  advisor:
+    # 人工触发，无阈值
+    feedback_window_days: 30         # 信噪比计算窗口
+
+push:
+  channels: [telegram]               # 后续可扩 email
+
+# host check（多机感知；cutover 时由 daemon-ctl install 写入 .host 文件）
+host_check_enabled: true

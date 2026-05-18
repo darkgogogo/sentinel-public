@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} · Sentinel{% endblock %}
+{% block content %}
+
+<p class="breadcrumb"><a href="/topics">← 主题列表</a></p>
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>{{ topic.name }}</h1>
+    <p class="page-sub">
+      industry <span class="em">{{ topic.industry }}</span>
+      <span class="sep">·</span>
+      告警 {% if topic.alert_enabled %}<span class="em" style="color:var(--ok)">on</span>{% else %}<span class="muted">off</span>{% endif %}
+      <span class="sep">·</span>
+      周报 {% if topic.weekly_enabled %}<span class="em" style="color:var(--ok)">on</span>{% else %}<span class="muted">off</span>{% endif %}
+      {% if topic.backfill_hours and topic.backfill_hours > 0 %}<span class="sep">·</span>backfill <span class="em">{{ topic.backfill_hours }}h</span>{% endif %}
+    </p>
+  </div>
+</header>
+
+{# 刚执行的 audit 摘要 highlight box #}
+{% if just_executed_summary %}
+<div class="inline-banner" style="background:var(--ok-soft); border-color:#86efac; color:var(--ok)">
+  <strong>✓ 上次覆盖审计已执行</strong>
+  <p>{{ just_executed_summary.notes or '已标记完成' }}</p>
+  {% if just_executed_summary.new_sources %}
+  <ul>
+  {% for s in just_executed_summary.new_sources %}
+    <li><span class="badge cold">{{ s.kind }}</span>
+        <span class="mono small">{{ s.identifier }}</span></li>
+  {% endfor %}
+  </ul>
+  <p class="muted small">这些信源已 link 到此主题。下次 collect（02/08/14/20）会自动抓取。</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{# 覆盖审计面板（auto_expand_audit 时默认展开；点 dashboard 链接进来）#}
+{% if latest_audit and latest_audit.status == 'pending' %}
+<details class="card audit-panel" {% if auto_expand_audit %}open{% endif %}>
+  <summary>
+    {% if latest_audit.severity == 'high' %}<span class="badge warn">high</span>
+    {% else %}<span class="badge paused">medium</span>{% endif %}
+    <strong>覆盖审计建议</strong>
+    <span class="muted small">{{ latest_audit.audited_at[:10] }} · 点击展开</span>
+  </summary>
+
+  <div class="audit-body">
+    <div class="audit-metrics">
+      <span class="metric">7d 入库 <strong>{{ latest_audit._metrics.msgs_7d }}</strong></span>
+      <span class="metric">平台多样性 <strong>{{ latest_audit._metrics.platform_count }}</strong></span>
+      <span class="metric">信源数 <strong>{{ latest_audit._metrics.source_count }}</strong></span>
+      <span class="metric">失败 <strong>{{ latest_audit._metrics.failure_pct }}%</strong></span>
+      <span class="metric">信号 <strong>{{ latest_audit._metrics.signal_ratio_pct }}%</strong></span>
+    </div>
+
+    {% if latest_audit.diagnosis_md %}
+    <div class="audit-diagnosis muted small">
+      {{ latest_audit.diagnosis_md }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/topics/{{ topic.id }}/run-coverage-fix">
+      <input type="hidden" name="audit_id" value="{{ latest_audit.id }}">
+
+      {% if latest_audit._rsshub %}
+      <div class="audit-section">
+        <h3>建议加 RSSHub 信源 <span class="muted small">勾选后一键添加</span></h3>
+        {% for r in latest_audit._rsshub %}
+        <label class="audit-option">
+          <input type="checkbox" name="rsshub_url" value="{{ r.url }}" checked>
+          <div>
+            <strong>{{ r.display_name }}</strong>
+            <span class="badge {% if r.confidence == 'high' %}ok{% else %}cold{% endif %}">{{ r.confidence }}</span>
+            <div class="mono small muted">{{ r.url }}</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if latest_audit._webaccess %}
+      <div class="audit-section">
+        <h3>建议跑 web-access 深度采集 <span class="muted small">勾选后生成 prompt（手动复制到 Claude）</span></h3>
+        {% for w in latest_audit._webaccess %}
+        <label class="audit-option">
+          <input type="checkbox" name="webaccess_pick" value="{{ w.platform }}|{{ w.keyword }}">
+          <div>
+            <strong>{{ w.platform }}</strong> · 关键词 <code>{{ w.keyword }}</code>
+            <div class="muted small">{{ w.reason }}</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="audit-actions">
+        <button type="submit" class="btn primary">执行选中项</button>
+      </div>
+    </form>
+
+    <form method="post" action="/coverage-audit/{{ latest_audit.id }}/dismiss" class="audit-dismiss">
+      <span class="muted small">不想处理？</span>
+      <select name="days">
+        <option value="7">7 天后再提醒</option>
+        <option value="30" selected>30 天后再提醒</option>
+        <option value="forever">永久忽略</option>
+      </select>
+      <button type="submit" class="btn small">稍后</button>
+    </form>
+  </div>
+</details>
+{% endif %}
+
+<section class="card">
+  <h2>元信息 <small class="muted">可编辑</small></h2>
+  <form method="post" action="/topics/{{ topic.id }}/update" class="vform">
+    <div class="field">
+      <label>主题名</label>
+      <input type="text" name="name" value="{{ topic.name }}" required>
+    </div>
+    <div class="field">
+      <label>行业</label>
+      <input type="text" name="industry" value="{{ topic.industry }}">
+    </div>
+    <div class="field">
+      <label>监控方向 <span class="muted small">(给 LLM 看的提示词)</span></label>
+      <textarea name="monitor_direction" rows="3">{{ topic.monitor_direction }}</textarea>
+    </div>
+    <div class="field">
+      <label>alert 运行频率 <span class="muted small">(距上次 < 间隔则跳过；0 = 用全局 alert.threshold_hours 6h)</span></label>
+      <select name="alert_interval_hours">
+        {% set ih = topic.alert_interval_hours or 0 %}
+        <option value="0" {% if ih == 0 %}selected{% endif %}>默认（全局 6h）</option>
+        <option value="12" {% if ih == 12 %}selected{% endif %}>每 12 小时</option>
+        <option value="24" {% if ih == 24 %}selected{% endif %}>每天</option>
+        <option value="72" {% if ih == 72 %}selected{% endif %}>每 3 天</option>
+        <option value="168" {% if ih == 168 %}selected{% endif %}>每周</option>
+        {% if ih not in (0, 12, 24, 72, 168) %}
+        <option value="{{ ih }}" selected>每 {{ ih }} 小时（自定义）</option>
+        {% endif %}
+      </select>
+      {% if topic.last_alert_checked_at %}
+      <span class="muted small" style="margin-left:8px">
+        上次检查 {{ topic.last_alert_checked_at[:16] }}
+      </span>
+      {% endif %}
+    </div>
+    <div class="field">
+      <label>backfill_hours <span class="muted small">(>0 表示下次 alert 还会用此窗口回看；跑过会清零)</span></label>
+      <input type="number" name="backfill_hours" value="{{ topic.backfill_hours or 0 }}" min="0" max="720" style="width: 100px">
+    </div>
+    <div class="field">
+      <button type="submit" class="btn primary">保存</button>
+      <span class="muted small" style="margin-left:12px">
+        告警 / 周报 开关在主题列表页直接点；created {{ topic.created_at[:16] }}
+      </span>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <h2>关联信源 <small class="muted">{{ topic._sources | length }} 个</small></h2>
+  {% if topic._sources %}
+  <table class="data">
+    <thead><tr><th>id</th><th>kind</th><th>identifier</th><th>display</th><th>skip_keyword</th><th>操作</th></tr></thead>
+    <tbody>
+    {% for s in topic._sources %}
+      <tr>
+        <td class="mono">#{{ s.id }}</td>
+        <td>{{ s.kind }}</td>
+        <td class="mono small">{{ s.identifier }}</td>
+        <td>{{ s.display_name or '—' }}</td>
+        <td>{% if s.skip_keyword_filter %}✓ 直通{% else %}—{% endif %}</td>
+        <td class="action-cell">
+          <form method="post" action="/topics/{{ topic.id }}/unlink" style="display:inline">
+            <input type="hidden" name="source_id" value="{{ s.id }}">
+            <button class="btn small danger" type="submit">解绑</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">暂无关联</p>
+  {% endif %}
+
+  {% if unlinked %}
+  <form method="post" action="/topics/{{ topic.id }}/link" class="form-inline">
+    <select name="source_id" required>
+      {% for s in unlinked %}
+      <option value="{{ s.id }}">[{{ s.kind }}] {{ s.display_name or s.identifier }}</option>
+      {% endfor %}
+    </select>
+    <label class="muted"><input type="checkbox" name="skip_keyword_filter" value="true"> 该源直通（跳过关键词过滤）</label>
+    <button type="submit" class="btn primary">关联</button>
+  </form>
+  {% else %}
+  <p class="muted small">所有 enabled source 已关联</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>关键词 <small class="muted">{{ topic._keywords | length }} 个</small></h2>
+
+  <details class="inline-help">
+    <summary>关键词怎么生效？</summary>
+    <div class="help-body">
+      <p>每 6h（02:30 / 08:30 / 14:30 / 20:30）跑 <code>alert</code> service 时，对该主题的<strong>新增消息做两层过滤</strong>：</p>
+      <ol>
+        <li><strong>第一层 keyword 过滤</strong>（这里设的）：<br>
+          只让 substring 命中<strong>任一关键词</strong>的消息进入下一层。
+          <code>VLESS 协议被封</code> 命中关键词 <code>VLESS</code>，会进入第二层；
+          <code>今天天气不错</code> 没命中任何关键词，直接丢弃，不消耗 LLM。
+        </li>
+        <li><strong>第二层 LLM 判定（triage）</strong>：<br>
+          经过滤的消息送 Claude Haiku，结合 <code>monitor_direction</code> 判断是否值得告警。
+        </li>
+      </ol>
+      <p class="muted small"><strong>无关键词时</strong>：所有新消息都进 LLM（成本高但漏报少）。<br>
+      <strong>关键词太严</strong>：用词不同的相关消息会漏（false negative）。<br>
+      <strong>某信源勾"直通"</strong>（在"关联信源"列）：该源所有消息跳过第一层，直接进 LLM。</p>
+      <p class="muted small">最佳实践：每个 topic 配 5-15 个高频核心词；每月 review 一次。</p>
+    </div>
+  </details>
+
+  <div class="chip-row">
+    {% for kw in topic._keywords %}
+    <span class="chip">
+      {{ kw }}
+      <form method="post" action="/topics/{{ topic.id }}/keyword/remove" style="display:inline">
+        <input type="hidden" name="keyword" value="{{ kw }}">
+        <button class="chip-x" type="submit" title="移除">×</button>
+      </form>
+    </span>
+    {% endfor %}
+  </div>
+  <form method="post" action="/topics/{{ topic.id }}/keyword" class="form-inline" style="margin-top:10px">
+    <input type="text" name="keyword" placeholder="新关键词" required size="20">
+    <button type="submit" class="btn primary">添加</button>
+    <button type="button" class="btn"
+            hx-post="/topics/{{ topic.id }}/recommend-keywords"
+            hx-target="#kw-candidates-area"
+            hx-swap="innerHTML"
+            hx-indicator="#kw-spinner">
+      🔍 AI 推荐关键词
+    </button>
+    <span id="kw-spinner" class="muted small htmx-indicator">
+      正在调用 LLM · 约 15-30s ...
+    </span>
+  </form>
+  <div id="kw-candidates-area" style="margin-top: var(--s-3)"></div>
+</section>
+
+<section class="card">
+  <h2>手动触发 analyze ★</h2>
+  <form method="post" action="/services/analyze/run" class="form-inline">
+    <input type="hidden" name="topic" value="{{ topic.name }}">
+    <select name="period_hours">
+      <option value="24">过去 24h</option>
+      <option value="48">过去 48h</option>
+      <option value="168" selected>过去 7 天</option>
+      <option value="336">过去 14 天</option>
+      <option value="720">过去 30 天</option>
+    </select>
+    <select name="mode">
+      <option value="auto">auto</option>
+      <option value="single">single</option>
+      <option value="timeseries">timeseries</option>
+    </select>
+    <button type="submit" class="btn primary">出深度报告</button>
+  </form>
+  <p class="muted small">异步后台跑（30s ~ 2min），完成后在 /reports 查看</p>
+</section>
+
+<section class="card">
+  <h2>手动触发 advisor · 信源运营建议</h2>
+  <form method="post" action="/services/advisor/run" class="form-inline">
+    <input type="hidden" name="topic" value="{{ topic.name }}">
+    <button type="submit" class="btn primary">出 advisor 建议</button>
+  </form>
+  <p class="muted small">基于过去 30 天 messages + alerts + user_label 反馈算信噪比，调 Haiku 出建议，写到 KB <code>03-主题/[topic]/信源.md</code> 的 advisor section</p>
+</section>
+
+{% endblock %}

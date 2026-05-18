@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Sentinel · 告警{% endblock %}
+{% block content %}
+
+<header class="page-header">
+  <div class="page-title">
+    <h1>告警</h1>
+    <p class="page-sub">
+      <span class="em">{{ alerts | length }}</span> 条结果
+      <span class="sep">·</span>
+      limit <span class="em">{{ limit }}</span>
+      {% if filter_topic_id or filter_push_status or filter_user_label %}
+        <span class="sep">·</span><span style="color:var(--accent)">已应用筛选</span>
+      {% endif %}
+    </p>
+  </div>
+</header>
+
+<form method="get" action="/alerts" class="filter-bar">
+  <label>主题
+    <select name="topic_id">
+      <option value="">全部</option>
+      {% for t in all_topics %}
+      <option value="{{ t.id }}" {% if filter_topic_id == t.id %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>push
+    <select name="push_status">
+      <option value="">全部</option>
+      <option value="sent" {% if filter_push_status == 'sent' %}selected{% endif %}>sent</option>
+      <option value="failed" {% if filter_push_status == 'failed' %}selected{% endif %}>failed</option>
+      <option value="pending" {% if filter_push_status == 'pending' %}selected{% endif %}>pending</option>
+    </select>
+  </label>
+  <label>反馈
+    <select name="user_label">
+      <option value="">全部</option>
+      <option value="true_positive" {% if filter_user_label == 'true_positive' %}selected{% endif %}>⭐ 准</option>
+      <option value="false_positive" {% if filter_user_label == 'false_positive' %}selected{% endif %}>🚫 误报</option>
+      <option value="_unlabeled" {% if filter_user_label == '_unlabeled' %}selected{% endif %}>未标</option>
+    </select>
+  </label>
+  <label>limit
+    <input type="number" name="limit" value="{{ limit }}" min="10" max="1000" style="width: 70px">
+  </label>
+  <button type="submit" class="btn small primary">筛选</button>
+  {% if filter_topic_id or filter_push_status or filter_user_label %}
+  <a href="/alerts" class="btn small">清除</a>
+  {% endif %}
+</form>
+
+{% if alerts %}
+<div class="card">
+<table class="data wide">
+  <thead><tr>
+    <th>时间</th><th>主题</th><th>headline</th>
+    <th>summary</th><th>push</th><th>反馈</th><th>原文</th>
+  </tr></thead>
+  <tbody>
+  {% for a in alerts %}
+    <tr>
+      <td class="mono nowrap">{{ a.triggered_at[:16] }}</td>
+      <td>
+        {% if a.topic_id %}
+          <a href="/alerts?topic_id={{ a.topic_id }}" class="muted">{{ a.topic_name or '?' }}</a>
+          <div class="muted small">{{ a.topic_industry or '?' }}</div>
+        {% else %}
+          <span class="muted">(已删 topic)</span>
+          <div class="muted small">孤儿 alert</div>
+        {% endif %}
+      </td>
+      <td class="strong">{{ a.headline }}</td>
+      <td class="summary">{{ a.summary }}</td>
+      <td>
+        {% if a.push_status == 'sent' %}<span class="badge ok">sent</span>
+        {% elif a.push_status == 'failed' %}<span class="badge warn">failed</span>
+        {% else %}<span class="badge cold">{{ a.push_status }}</span>{% endif %}
+      </td>
+      <td class="action-cell">
+        <div class="action-row">
+          <form method="post" action="/alerts/{{ a.id }}/label">
+            <input type="hidden" name="label" value="true_positive">
+            <button class="btn-icon" title="标准告警" type="submit">
+              {% if a.user_label == 'true_positive' %}<span class="active-star">⭐</span>{% else %}☆{% endif %}
+            </button>
+          </form>
+          <form method="post" action="/alerts/{{ a.id }}/label">
+            <input type="hidden" name="label" value="false_positive">
+            <button class="btn-icon" title="误报" type="submit">
+              {% if a.user_label == 'false_positive' %}<span class="active-cross">🚫</span>{% else %}<span class="muted">⊘</span>{% endif %}
+            </button>
+          </form>
+          {% if a.user_label %}
+          <form method="post" action="/alerts/{{ a.id }}/label">
+            <input type="hidden" name="label" value="clear">
+            <button class="btn-icon muted" title="清除标记" type="submit">×</button>
+          </form>
+          {% endif %}
+        </div>
+      </td>
+      <td>
+        {% if a._related_messages %}
+        <details>
+          <summary class="btn small">{{ a._related_messages | length }} 条</summary>
+          <div class="related-msgs">
+            {% for m in a._related_messages %}
+            <div class="related-msg">
+              <div class="related-meta">
+                <span class="badge cold">{{ m.source_kind }}</span>
+                <span class="muted small">{{ (m.posted_at or '')[:16] }}</span>
+                {% if m.url %}<a href="{{ m.url }}" target="_blank" class="muted small">原帖 ↗</a>{% endif %}
+              </div>
+              <div class="related-body">{{ m.content[:200] }}{% if m.content|length > 200 %}…{% endif %}</div>
+            </div>
+            {% endfor %}
+          </div>
+        </details>
+        {% else %}<span class="muted small">—</span>{% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted">无匹配告警 · 调整筛选或清除条件</p>
+{% endif %}
+
+{% endblock %}
