@@ -8,6 +8,94 @@
 
 数据流（左→右）+ 控制流（顶部橙虚线，触发 service）+ 工具能力区（下方独立）三轨布局。详见 [docs/design.md](docs/design.md) §1。
 
+## 核心功能
+
+### 🛰 多源信源采集 · 6 collector kind 通用接入
+
+按"主题"组织（用户面对的是 *VPN 行业动态*、*AI Coding 工具趋势* 这类业务概念，不是 collector 实现细节）。**同渠道在不同主题下是独立 source 实例**——比如同一个 Telegram 群可同时服务多个 topic，按各自的 keyword 过滤。
+
+| kind | 适合 | 实现 |
+|---|---|---|
+| `telegram` | 公开频道 / 群组 | telethon · 需要 TELEGRAM_API_ID/HASH |
+| `rss` | 普通 RSS + 本机 RSSHub 转出来的社交平台（V2EX/B 站/即刻 等） | feedparser + HTML 剥离 |
+| `twitter` | 单一用户 timeline | SocialData API · 需要 SOCIALDATA_API_KEY |
+| `reddit` | 子版块 | 抓 reddit `.rss` 端点 · 无需 API key |
+| `social` | 特定平台 dispatch | V2EX 已实现 · 其余推荐走 RSSHub |
+| **`inbox`** | **反爬太强的长尾平台**（知乎/小红书/微博）| **web-access skill 落 markdown 到 `inbox/<slug>/*.md`，下次 collect 自动 ingest** |
+
+### 🚨 智能告警 · LLM triage + 多重防误报
+
+每 6h `alert service` 跑一次，看新消息 → **Haiku 4.5** 判断 *worth_alert*。命中三关才推送：
+
+1. **具体新事件**（不是日常吐槽 / 不是现状回顾 / **不是旧事件余波**，事件本身距今 ≤ 7 天）
+2. **跨源验证**（≥2 个独立频道讨论同一事件；单源仅"全行业冲击级"事件 + `【独家】` 前缀）
+3. **业务相关性**（明确指向 topic 的监控对象）
+
+防误报多层兜底：
+
+- **24h headline dedup**（fuzzy match · SequenceMatcher ≥0.85 + 双向 substring，抓同义改写）
+- **per-topic 频率 gate**（0/6/12/24/72/168h，避免低频 topic 浪费 LLM 调用）
+- **`topic_sources.alert_enabled` 标志**（让"用户讨论区"类回声源只供 advisor/analyze，不进 alert triage）
+- **首次回看窗口** `backfill_hours`（新 topic 第一次 alert 回看 N 小时，跑过自动清零）
+
+命中后 Telegram push + 写 `02-告警归档/YYYY-W##-告警合集.md`（按周聚合）。
+
+### 📊 深度报告 · Opus 4.7 出 8 字段议题分析
+
+`analyze service` 人工触发或周日 22:00 weekly 跑。**Opus 4.7** 对一个 topic 的时间窗（默认 7d）消息聚类成议题，每议题输出 8 段，含 **4 个反向校验字段**抗 LLM 糊弄：
+
+- 议题主线（headline / 影响范围 / 时间线）
+- **❓ 反例信号**（什么样的证据会证伪当前判断）
+- **🧪 什么会证伪**（12 个月内可观察的证伪事件）
+- **⚠️ 误判风险**（采样偏置 / 信源立场 / 单地区等具体风险类型）
+- **🔗 多源证实**（区分"事件本身多源 vs 归因单源"）
+
+落 `01-报告/周报/YYYY-W##-{topic}-周报.md` 或 `01-报告/主题深度报告/YYYY-MM-DD-{headline-slug}.md`。
+
+### 🎯 信源治理 · advisor 反馈环
+
+用户在 Web UI 给 alert 打 `准 / 误报` 标签 → `advisor service` 看 30 天反馈窗口 + 信噪比，Haiku 给"加权 / 降权 / 关闭 / 加关键词"建议，**覆盖式更新** `03-主题/<topic>/信源.md` 的 `## advisor 建议` section（不破坏元信息和用户自定义段）。每 2-4 周跑一次，逐步剔除噪音源。
+
+### 🤖 AI 主动驱动 · 3 个顾问 service (v2.2)
+
+不是被动等用户操作，AI 主动建议优化：
+
+| service | 触发 | 输入 → 输出 |
+|---|---|---|
+| **`coverage_audit`** | 周一 09:00 watchdog | 每 topic 算 4 指标 (msgs_7d / platform_count / failure_pct / signal_ratio) → severity (high/medium/ok) + LLM 诊断 + RSSHub 推荐 + web-access 关键词 |
+| **`source_discovery`** | 新建 topic 时 Web UI 按钮 | topic name + industry + monitor_direction → LLM web search 推荐 5-10 真实信源 |
+| **`keyword_advisor`** | topic 详情页按钮 | 现有 keywords + 最近 50 条样本 (alerted/unalerted 混合) → 5-15 关键词推荐 + reason + confidence |
+
+### 🖥 Web UI · 完整后台
+
+`python -m sentinel web` → `http://127.0.0.1:8080`（默认仅 localhost）。
+
+| 页面 | 干啥 |
+|---|---|
+| `/` dashboard | KPI + 趋势 + 覆盖审计 banner + 失活源警告 |
+| `/sources` | 信源管理（按 kind 分组 + 三层引导新建表单 + topic 关联）|
+| `/topics` | 主题（alert / weekly / 频率 三 toggle + backfill + 覆盖审计 badge）|
+| `/topics/{id}` | 详情（关键词 + AI 推荐关键词按钮 + 手动 analyze/advisor + 覆盖审计面板）|
+| `/alerts` | 告警（filter + 展开 related messages + 一键标记 准/误报）|
+| `/reports` | 周报 + 深度报告 + 告警归档浏览（filter + 上下篇导航）|
+| `/status` | service_runs（LLM tok+cost · 立即跑 watch mode · 自动刷新）|
+| `/cost` | LLM 成本按月聚合 |
+
+### 🎙 三入口 · 同套 service API
+
+- **Web UI**（推荐 · 含运维操作 + 写入校验）
+- **CLI** (`python -m sentinel {collect,alert,analyze,advisor,deploy,status} ...`)
+- **自定义 Claude Skill**（在 Claude 对话里说"跑下 X 周报"/"出 Y 信源建议" → skill 翻译成 CLI 命令 + 让你确认是否真跑）
+
+### 🕰 launchd 长驻 · 6+1 plist 自动化
+
+`python -m sentinel deploy install` 渲染 6 sentinel plist 到 `~/Library/LaunchAgents/`；社交平台用户可额外装本机 RSSHub 走第 7 个 plist。
+
+- 4 触发型（collect / alert / weekly / backup）+ 2 长驻（watchdog 巡检 + web UI）
+- **每天 09:00 watchdog** 巡检 collect/alert/backup/weekly 4 项 + 周一跑 coverage_audit + 月初 daily heartbeat
+- **每天 23:30 backup** SQLite gzip 到 `<KB_ROOT>/_archive/backups/`（14 天滚动）+ rotate-logs（>10 MB 截断 .gz × 5）
+- **多机感知** `.host` 文件 + `host_check`：副机跑同 service 自动 skipped，不污染主机数据
+
 ## 状态
 
 **v2.2 (2026-05-17)** · 215 测试全过 · 4 service + 3 AI advisor + 6 collector kind · macOS launchd 接管 (6 plist + 可选 RSSHub plist)
